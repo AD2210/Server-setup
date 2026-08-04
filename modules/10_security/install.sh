@@ -5,7 +5,7 @@ source "$BASE_DIR/lib/prompt.sh"
 
 # configuration ssh
 log_info "Mise à Jour de la configuration SSH..."
-
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 update_sshd_config() {
   local key="$1"
   local value="$2"
@@ -17,16 +17,33 @@ update_sshd_config() {
     echo "$key $value" >> "$file"
   fi
 } 
+log_info "Configuration port SSH..."
+
+SSH_PORT=$(ask_input "Enter SSH port" "22")
+
+if [ -z "$SSH_PORT" ]; then
+  log_error "SSH port cannot be empty"
+  exit 1
+fi
+
+if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] || [ "$SSH_PORT" -lt 1 ] || [ "$SSH_PORT" -gt 65535 ]; then
+  log_error "Invalid SSH port: $SSH_PORT"
+  exit 1
+fi
 
 update_sshd_config "Port" "$SSH_PORT"
 update_sshd_config "PermitRootLogin" "no"
 update_sshd_config "PasswordAuthentication" "no"
+
+if ! sshd -t; then
+  log_error "SSH config invalid, restoring backup"
+  cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
+  exit 1
+fi
 systemctl restart ssh
 
 # Config du parefeu
-log_info "Configuration port SSH..."
 
-SSH_PORT=$(ask_input "Enter SSH port" "22")
 
 log_info "Port UFW ouvert pour connexion ssh : $SSH_PORT"
 ufw allow "$SSH_PORT"/tcp
