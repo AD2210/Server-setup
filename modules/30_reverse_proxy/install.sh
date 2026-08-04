@@ -108,11 +108,6 @@ fi
 # Ajout d'une nouvelle application
 APP_NAME=$(ask_input "Nom de l'app" "app1")
 
-if docker ps -a --format '{{.Names}}' | grep -q "^$SERVICE$"; then
-  log_error "Service docker déjà existant"
-  continue
-fi
-
 if [ -d "$APP_DIR/$APP_NAME" ]; then
   log_error "L'application existe déjà"
   exit 1
