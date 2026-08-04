@@ -16,6 +16,12 @@ cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak #Backup pour rollback en cas d'
 systemctl disable --now ssh.socket
 systemctl enable --now ssh
 
+# Lecture de config
+CURRENT_SSH_PORT=$(grep -E "^Port " /etc/ssh/sshd_config | awk '{print $2}' | head -n1)
+if [ -z "$CURRENT_SSH_PORT" ]; then
+  CURRENT_SSH_PORT=22
+fi
+
 update_sshd_config() {
   local key="$1"
   local value="$2"
@@ -30,6 +36,7 @@ update_sshd_config() {
 
 log_info "Configuration port SSH..."
 
+# Entrée + controle de saisie
 SSH_PORT=$(ask_input "Entre le nouveau port SSH" "22")
 
 if [ -z "$SSH_PORT" ]; then
@@ -59,15 +66,13 @@ if ! sshd -t; then
 fi
 systemctl restart ssh
 
-if ss -tln | grep -q ":$SSH_PORT"; then
-  log_info "SSH is listening on port $SSH_PORT"
-else
-  log_error "SSH is NOT listening on port $SSH_PORT"
+if ! ss -tln | grep -q ":$SSH_PORT"; then
+  log_error "SSH n'écoute pas sur le nouveau port, abandon"
   exit 1
 fi
 
 if ! systemctl is-active --quiet ssh; then
-  log_error "SSH service is not running"
+  log_error "Le service SSH n'est pas actif"
   exit 1
 fi
 
@@ -83,19 +88,21 @@ ufw allow 443
 ufw --force enable
 
 # fermeture du port par défaut
-log_warn "--------------------------------------------------"
-log_warn "IMPORTANT: Port SSH modifié"
-log_warn "Avant de fermer le port 22:"
-log_warn "1. Ouvrir un nouveau terminal"
-log_warn "2. Tester la connexion avec le nouveau port : ssh -p [port] [user]@[ip]"
-log_warn "3. Vérifier que la connexion reussi"
-log_warn "--------------------------------------------------"
+if [ "$CURRENT_SSH_PORT" != "$SSH_PORT" ]; then
+  log_warn "--------------------------------------------------"
+  log_warn "IMPORTANT: Port SSH modifié"
+  log_warn "Avant de fermer le port $CURRENT_SSH_PORT"
+  log_warn "1. Ouvrir un nouveau terminal"
+  log_warn "2. Tester la connexion avec le nouveau port : ssh -p [port] [user]@[ip]"
+  log_warn "3. Vérifier que la connexion reussi"
+  log_warn "--------------------------------------------------"	
 
-if confirm "Voulez vous fermer le port 22 maintenant ?"; then
-  log_info "Fermeture du port 22 dans UFW..."
-  ufw delete allow 22/tcp
-else
-  log_info "Port 22 toujours ouvert"
+  if confirm "Fermer l'ancien port SSH ($CURRENT_SSH_PORT) ?"; then
+    ufw delete allow "$CURRENT_SSH_PORT"/tcp
+    log_info "Ancien port $CURRENT_SSH_PORT fermé"
+  else
+    log_info "Ancien port conservé"
+  fi
 fi
 
 # instalation Fail2ban
