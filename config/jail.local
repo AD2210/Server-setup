@@ -1,6 +1,6 @@
 [DEFAULT]
 # IP whitelist (à adapter)
-ignoreip = 127.0.0.1/8 ::1
+ignoreip = 82.66.240.34
 
 # Temps de ban
 bantime = 1h
@@ -39,3 +39,12 @@ logpath = /var/log/fail2ban.log
 bantime = 1w
 findtime = 1d
 maxretry = 5
+
+[caddy]
+enabled = true
+port = http,https
+filter = caddy
+logpath = /var/log/caddy/access.log
+maxretry = 20
+findtime = 5m
+bantime = 30m
