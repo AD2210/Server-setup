@@ -8,6 +8,11 @@ BASE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 source "$BASE_DIR/lib/log.sh"
 source "$BASE_DIR/lib/prompt.sh"
 
+# Controle de droit avant execution
+if [ "$EUID" -ne 0 ]; then
+  exec sudo "$0" "$@"
+fi
+
 # Configuration ssh
 log_info "Mise à Jour de la configuration SSH..."
 cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak #Backup pour rollback en cas d'erreur
