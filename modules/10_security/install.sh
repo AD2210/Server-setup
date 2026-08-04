@@ -40,7 +40,9 @@ if ! sshd -t; then
   cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
   exit 1
 fi
-systemctl restart ssh
+systemctl daemon-reload
+systemctl restart ssh.socket
+
 
 # Config du parefeu
 
