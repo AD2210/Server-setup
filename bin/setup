@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
-BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Résout le chemin réel même avec symlink
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+BASE_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+
 source "$BASE_DIR/lib/log.sh"
 source "$BASE_DIR/lib/utils.sh"
 
