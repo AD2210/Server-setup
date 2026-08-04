@@ -14,7 +14,7 @@ chmod +x bin/setup
 
 sudo ln -s $(pwd)/bin/setup /usr/local/bin/setup
 
-setup system
+sudo setup system
 
 Usage:
 setup all
