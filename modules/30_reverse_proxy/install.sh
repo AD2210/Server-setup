@@ -108,7 +108,7 @@ fi
 # Ajout d'une nouvelle application
 APP_NAME=$(ask_input "Nom de l'app" "app1")
 
-if [ -d "$APP_DIR/$APP_NAME" ]; then
+if [ -d "$APPS_DIR/$APP_NAME" ]; then
   log_error "L'application existe déjà"
   exit 1
 fi
