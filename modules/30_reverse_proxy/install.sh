@@ -257,7 +257,7 @@ EOF
 } >> "$TMP_CADDY"
 
 # Validation final
-if ! caddy validate --config "$TMP_CADDY"; then
+if ! caddy validate --config "$TMP_CADDY" --adapter caddyfile; then
   log_error "Configuration Caddy invalide"
   rm "$TMP_CADDY"
   exit 1
