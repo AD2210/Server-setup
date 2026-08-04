@@ -1,4 +1,41 @@
+[DEFAULT]
+# IP whitelist (à adapter)
+ignoreip = 127.0.0.1/8 ::1
+
+# Temps de ban
+bantime = 1h
+findtime = 10m
+maxretry = 5
+
+# Backend moderne (important sur Ubuntu)
+backend = systemd
+
+# Action (iptables via UFW)
+banaction = ufw
+
+# Email (optionnel)
+destemail = root@localhost
+sender = fail2ban@localhost
+
+# Logging
+loglevel = INFO
+
+# Anti récidive
+bantime.increment = true
+bantime.factor = 2
+bantime.max = 24h
+
+# SSH
 [sshd]
 enabled = true
+port = ssh
+filter = sshd
+logpath = %(sshd_log)s
 maxretry = 5
-bantime = 3600
+
+[recidive]
+enabled = true
+logpath = /var/log/fail2ban.log
+bantime = 1w
+findtime = 1d
+maxretry = 5
