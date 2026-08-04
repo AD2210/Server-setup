@@ -113,6 +113,11 @@ if docker ps -a --format '{{.Names}}' | grep -q "^$SERVICE$"; then
   continue
 fi
 
+if [ -d "$APP_DIR/$APP_NAME" ]; then
+  log_error "L'application existe déjà"
+  exit 1
+fi
+
 # input des endpoints, domaine et port
 ENDPOINTS=()
 
@@ -151,11 +156,6 @@ if [ ! -d "$APPS_DIR" ]; then
 fi
 
 APP_DIR="$APPS_DIR/$APP_NAME"
-
-if [ -d "$APP_DIR" ]; then
-  log_error "L'application existe déjà"
-  exit 1
-fi
 
 # création du dossier de l'app, elevation des privilèges
 log_info "Création du dossier $APP_DIR"
