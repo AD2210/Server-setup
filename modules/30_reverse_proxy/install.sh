@@ -20,7 +20,8 @@ if [ ! -w "$CADDYFILE" ]; then
 fi
 
 # Backup Caddyfile
-cp "$CADDYFILE" "$CADDYFILE.bak.$(date +%s)"
+CADDY_BACKUP="$CADDYFILE.bak.$(date +%s)"
+cp "$CADDYFILE" "$CADDY_BACKUP"
 
 # Lecture des ports déjà utilisé
 get_used_ports() {
@@ -58,23 +59,45 @@ show_ports_info() {
 
 ask_port() {
   while true; do
-    show_ports_info
+    show_ports_info >&2   # 🔥 envoie logs vers stderr
 
+    local PORT
     PORT=$(ask_input "Port" "")
 
     if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
-      log_error "Port invalide"
+      log_error "Port invalide" >&2
       continue
     fi
 
     if get_used_ports | grep -q "^$PORT$"; then
-      log_error "Port déjà utilisé"
+      log_error "Port déjà utilisé" >&2
       continue
     fi
 
     echo "$PORT"
     return
   done
+}
+
+is_duplicate_endpoint() {
+  local DOMAIN="$1"
+  local PORT="$2"
+
+  for ep in "${ENDPOINTS[@]}"; do
+    IFS="|" read d p s <<< "$ep"
+
+    if [ "$d" = "$DOMAIN" ]; then
+      log_error "Domaine déjà ajouté dans cette session"
+      return 0
+    fi
+
+    if [ "$p" = "$PORT" ]; then
+      log_error "Port déjà utilisé dans cette session"
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 # Controle de droit avant execution
@@ -106,10 +129,14 @@ while confirm "Ajouter un endpoint ?"; do
   PORT=$(ask_port)
   SERVICE=$(ask_input "Service docker" "$APP_NAME")
 
+  if is_duplicate_endpoint "$DOMAIN" "$PORT"; then
+    continue
+  fi
+
   ENDPOINTS+=("$DOMAIN|$PORT|$SERVICE")
 done
 
-# controle d'erreur si variable vide
+# controle d'erreur si variable vide, reponse N
 if [ ${#ENDPOINTS[@]} -eq 0 ]; then
   log_error "Aucun endpoint défini"
   exit 1
@@ -211,6 +238,10 @@ fi
 
 log_info "Ajout de la configuration dans Caddyfile"
 
+# on utilise un fichier temporaire pour faire le contrôle
+TMP_CADDY=$(mktemp)
+cp "$CADDYFILE" "$TMP_CADDY"
+
 {
   echo ""
   echo "# --- $APP_NAME ---"
@@ -228,16 +259,26 @@ EOF
   done
 
   echo "# --- END $APP_NAME ---"
-} >> "$CADDYFILE"
+} >> "$TMP_CADDY"
 
 # Validation final
-if ! caddy validate --config "$CADDYFILE"; then
+if ! caddy validate --config "$TMP_CADDY"; then
   log_error "Configuration Caddy invalide"
+  rm "$TMP_CADDY"
   exit 1
 fi
 
+# une fois validé on mets à jour
+mv "$TMP_CADDY" "$CADDYFILE"
+
 log_info "Reload de Caddy"
-systemctl reload caddy
+if ! systemctl reload caddy; then
+  log_error "Reload échoué, rollback..."
+
+  cp "$CADDY_BACKUP" "$CADDYFILE"
+  systemctl reload caddy
+  exit 1
+fi
 
 echo ""
 log_info "Déploiement reverse proxy terminé :"
