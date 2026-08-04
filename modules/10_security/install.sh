@@ -6,6 +6,8 @@ source "$BASE_DIR/lib/prompt.sh"
 # configuration ssh
 log_info "Mise à Jour de la configuration SSH..."
 cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+systemctl disable --now ssh.socket
+systemctl enable --now ssh
 update_sshd_config() {
   local key="$1"
   local value="$2"
@@ -40,9 +42,7 @@ if ! sshd -t; then
   cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
   exit 1
 fi
-systemctl daemon-reload
-systemctl restart ssh.socket
-
+systemctl restart ssh
 
 # Config du parefeu
 
