@@ -6,9 +6,21 @@ source "$BASE_DIR/lib/prompt.sh"
 # configuration ssh
 log_info "Mise à Jour de la configuration SSH..."
 
-sed -i "s/^Port .*/Port $SSH_PORT/" /etc/ssh/sshd_config || echo "Port $SSH_PORT" >> /etc/ssh/sshd_config
-sed -i "s/^PermitRootLogin .*/PermitRootLogin no/" /etc/ssh/sshd_config
-sed -i "s/^PasswordAuthentication .*/PasswordAuthentication no/" /etc/ssh/sshd_config
+update_sshd_config() {
+  local key="$1"
+  local value="$2"
+  local file="/etc/ssh/sshd_config"
+
+  if grep -qE "^[#]*\s*$key" "$file"; then
+    sed -i "s|^[#]*\s*$key.*|$key $value|" "$file"
+  else
+    echo "$key $value" >> "$file"
+  fi
+} 
+
+update_sshd_config "Port" "$SSH_PORT"
+update_sshd_config "PermitRootLogin" "no"
+update_sshd_config "PasswordAuthentication" "no"
 systemctl restart ssh
 
 # Config du parefeu
