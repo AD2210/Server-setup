@@ -1,4 +1,3 @@
-```bash
 #!/usr/bin/env bash
 
 ## Installation et configuration de Docker Engine
@@ -353,4 +352,3 @@ if [ "$USER_GROUP_UPDATED" = true ]; then
 fi
 
 log_info "Installation et configuration Docker terminées avec succès."
-```
