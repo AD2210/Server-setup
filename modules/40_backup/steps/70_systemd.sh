@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-## Étape 70 - Services et timers systemd
-
 log_step "Configuration des timers de sauvegarde"
 
 create_service() {
     local name="$1" description="$2" exec="$3" docker_dependency="${4:-no}"
-
     {
         echo "[Unit]"
         echo "Description=$description"
@@ -29,7 +26,6 @@ create_service() {
 
 create_timer() {
     local name="$1" description="$2" schedule="$3"
-
     cat > "/etc/systemd/system/$name.timer" <<EOF
 [Unit]
 Description=$description
@@ -45,62 +41,39 @@ WantedBy=timers.target
 EOF
 }
 
-if [ "$PROVIDER_NAME" != "none" ]; then
-    create_service \
-        "server-setup-backup-provider" \
-        "Server Setup - Snapshot VPS fournisseur" \
-        "/usr/local/lib/server-setup/backup-provider-snapshot.sh"
+disable_unit() {
+    local name="$1"
+    systemctl disable --now "$name.timer" >/dev/null 2>&1 || true
+    rm -f "/etc/systemd/system/$name.timer" "/etc/systemd/system/$name.service"
+}
 
-    create_timer \
-        "server-setup-backup-provider" \
-        "Server Setup - Timer snapshot VPS" \
-        "$PROVIDER_SCHEDULE"
-
-    run_quiet \
-        "Impossible d'activer le timer provider." \
-        systemctl enable --now server-setup-backup-provider.timer \
-        || exit 1
+if $DB_BACKUP_ENABLED; then
+    create_service "server-setup-backup-db" "Server Setup - Sauvegarde PostgreSQL"         "/usr/local/lib/server-setup/backup-databases.sh" yes
+    create_timer "server-setup-backup-db" "Server Setup - Timer PostgreSQL" "$DB_SCHEDULE"
+else
+    disable_unit "server-setup-backup-db"
 fi
 
-create_service \
-    "server-setup-backup-db" \
-    "Server Setup - Sauvegarde PostgreSQL" \
-    "/usr/local/lib/server-setup/backup-databases.sh" \
-    "yes"
+if $FILES_BACKUP_ENABLED; then
+    create_service "server-setup-backup-files" "Server Setup - Snapshot logique fichiers"         "/usr/local/lib/server-setup/backup-files.sh"
+    create_timer "server-setup-backup-files" "Server Setup - Timer fichiers" "$FILES_SCHEDULE"
+else
+    disable_unit "server-setup-backup-files"
+fi
 
-create_timer \
-    "server-setup-backup-db" \
-    "Server Setup - Timer PostgreSQL" \
-    "$DB_SCHEDULE"
-
-create_service \
-    "server-setup-backup-files" \
-    "Server Setup - Snapshot logique fichiers" \
-    "/usr/local/lib/server-setup/backup-files.sh"
-
-create_timer \
-    "server-setup-backup-files" \
-    "Server Setup - Timer fichiers" \
-    "$FILES_SCHEDULE"
-
-create_service \
-    "server-setup-backup-provider" \
-    "Server Setup - Snapshot VPS fournisseur" \
-    "/usr/local/lib/server-setup/backup-provider-snapshot.sh"
-
-create_timer \
-    "server-setup-backup-provider" \
-    "Server Setup - Timer snapshot VPS" \
-    "$PROVIDER_SCHEDULE"
+if $PROVIDER_BACKUP_ENABLED; then
+    create_service "server-setup-backup-provider" "Server Setup - Snapshot VPS fournisseur"         "/usr/local/lib/server-setup/backup-provider-snapshot.sh"
+    create_timer "server-setup-backup-provider" "Server Setup - Timer snapshot VPS" "$PROVIDER_SCHEDULE"
+else
+    disable_unit "server-setup-backup-provider"
+fi
 
 run_quiet "Impossible de recharger systemd." systemctl daemon-reload || exit 1
 
-for timer in \
-    server-setup-backup-db.timer \
-    server-setup-backup-files.timer \
-    server-setup-backup-provider.timer; do
+$DB_BACKUP_ENABLED && run_quiet "Impossible d'activer le timer PostgreSQL."     systemctl enable --now server-setup-backup-db.timer || true
 
-    run_quiet "Impossible d'activer $timer." systemctl enable --now "$timer" || exit 1
-done
+$FILES_BACKUP_ENABLED && run_quiet "Impossible d'activer le timer snapshot logique."     systemctl enable --now server-setup-backup-files.timer || true
 
-log_info "Timers de sauvegarde activés."
+$PROVIDER_BACKUP_ENABLED && run_quiet "Impossible d'activer le timer snapshot provider."     systemctl enable --now server-setup-backup-provider.timer || true
+
+log_info "Timers actifs configurés."
