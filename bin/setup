@@ -48,7 +48,7 @@ source "$PROJECT_DIR/lib/system.sh"
 # ----------------------------------------------------------------------------
 
 usage() {
-    log "Usage : sudo setup {all|system|security|docker|proxy|backup}"
+    log "Usage : sudo setup {all|system|security|security-deluser|docker|proxy|backup}"
 }
 
 run_module() {
@@ -122,6 +122,9 @@ case "$COMMAND" in
         ;;
     backup)
         run_module "40_backup"
+        ;;
+    security-deluser)
+        run_module "11_security_deluser"
         ;;
     help|-h|--help|"")
         usage

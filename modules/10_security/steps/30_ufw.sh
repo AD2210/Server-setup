@@ -12,27 +12,6 @@
 
 log_step "Configuration du pare-feu UFW"
 
-remove_initial_user() {
-    local user="$1"
-
-    if [ "$user" = "root" ]; then
-        log_info "Le compte root est conservé avec accès SSH désactivé."
-        return 0
-    fi
-
-    if ! id "$user" >/dev/null 2>&1; then
-        log_info "Le compte '$user' n'existe plus."
-        return 0
-    fi
-
-    userdel -r "$user" || {
-        log_error "Impossible de supprimer l'utilisateur '$user'."
-        return 1
-    }
-
-    log_info "Utilisateur initial '$user' supprimé."
-}
-
 # Le port 22 est conservé pendant la transition uniquement s'il s'agit
 # effectivement de l'ancien port.
 if [ "$CURRENT_SSH_PORT" = "22" ] && [ "$SSH_PORT" != "22" ]; then
@@ -82,16 +61,6 @@ if [ "$CURRENT_SSH_PORT" != "$SSH_PORT" ]; then
     fi
 fi
 
-if [ "$INITIAL_USER" != "root" ] && [ "$INITIAL_USER" != "$ADMIN_USER" ]; then
-    log_step "Gestion de l'utilisateur fournisseur"
-
-    log_warn "Ne supprimez '$INITIAL_USER' qu'après avoir validé la connexion avec '$ADMIN_USER'."
-
-    if confirm "Supprimer l'utilisateur initial '$INITIAL_USER' ?"; then
-        remove_initial_user "$INITIAL_USER" || exit 1
-    else
-        log_info "Utilisateur '$INITIAL_USER' conservé."
-    fi
-else
-    log_info "Compte root conservé avec accès SSH désactivé."
-fi
+log_warn "L'utilisateur fournisseur n'a pas été supprimé automatiquement."
+log_info "Ouvrez une nouvelle session avec '$ADMIN_USER', puis exécutez :"
+log_info "sudo setup security-deluser"
