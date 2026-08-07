@@ -174,15 +174,24 @@ def cmd_create_snapshot(client: ovh.Client, cfg: dict[str, str], args) -> None:
             "Un snapshot existe déjà. Supprimez-le avant création."
         )
 
-    payload = client.post(
-        f"/vps/{service}/createSnapshot",
-        description=args.description,
+    print(
+        f"[OVH] Création du snapshot pour {service}",
+        file=sys.stderr,
     )
+
+    try:
+        payload = client.post(
+            f"/vps/{service}/createSnapshot",
+            description=args.description,
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            f"Impossible de créer le snapshot pour {service}: "
+            f"{type(exc).__name__}: {exc}"
+        ) from exc
 
     wait_task(client, service, payload)
 
-    # L'objet snapshot peut apparaître légèrement après la fin
-    # de la tâche OVH.
     for _ in range(12):
         if get_snapshot(client, service) is not None:
             print("Snapshot OVH disponible.")
@@ -230,7 +239,25 @@ def main() -> int:
     except SystemExit:
         raise
     except Exception as exc:
-        print(f"[OVH][ERROR] {exc}", file=sys.stderr)
+        print(
+            f"[OVH][ERROR] {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+
+        status = getattr(exc, "http_status", None)
+        if status is not None:
+            print(
+                f"[OVH][ERROR] HTTP status: {status}",
+                file=sys.stderr,
+            )
+
+        response = getattr(exc, "response", None)
+        if response is not None:
+            print(
+                f"[OVH][ERROR] Response: {response}",
+                file=sys.stderr,
+            )
+
         return 1
 
 
