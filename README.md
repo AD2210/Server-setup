@@ -1,4 +1,7 @@
 # Server Setup
+0) commencer par généré une clé ssh ou utiliser celle déjà en place pour l'accès serveur
+
+
 0) se connecter à l'instance vierge :
 ssh [User]@[Ip] -p [Port] -i [Ssh_Key]
 par défaut l'option port pointe sur 22, elle est facultative
