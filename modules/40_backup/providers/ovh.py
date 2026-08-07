@@ -110,13 +110,20 @@ def wait_task(client: ovh.Client, service: str, payload, timeout: int = 1800) ->
 def get_snapshot(client: ovh.Client, service: str):
     try:
         return client.get(f"/vps/{service}/snapshot")
-    except Exception as exc:
-        text = str(exc)
 
-        # Quand aucun snapshot n'existe, l'API historique répond généralement
-        # par une erreur HTTP. On traite uniquement les réponses explicitement
-        # associées à une absence de ressource comme "aucun snapshot".
-        if "404" in text or "not found" in text.lower():
+    except Exception as exc:
+        message = str(exc).lower()
+
+        # OVH retourne une erreur lorsque le VPS ne possède
+        # actuellement aucun snapshot.
+        snapshot_missing_messages = (
+            "the requested object (snapshot) does not exist",
+            "requested object (snapshot) does not exist",
+            "snapshot does not exist",
+            "snapshot not found",
+        )
+
+        if any(value in message for value in snapshot_missing_messages):
             return None
 
         raise
@@ -174,11 +181,19 @@ def cmd_create_snapshot(client: ovh.Client, cfg: dict[str, str], args) -> None:
 
     wait_task(client, service, payload)
 
-    # Contrôle post-action.
-    if get_snapshot(client, service) is None:
-        raise RuntimeError(
-            "La tâche OVH est terminée mais aucun snapshot n'est visible."
-        )
+    # L'objet snapshot peut apparaître légèrement après la fin
+    # de la tâche OVH.
+    for _ in range(12):
+        if get_snapshot(client, service) is not None:
+            print("Snapshot OVH disponible.")
+            return
+
+        time.sleep(5)
+
+    raise RuntimeError(
+        "La création est terminée mais le snapshot "
+        "n'est toujours pas visible après 60 secondes."
+    )
 
 
 def main() -> int:
