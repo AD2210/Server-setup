@@ -33,11 +33,30 @@ require_ubuntu_lts() {
         exit 1
     fi
 
-    if [[ "${VERSION:-}" != *LTS* ]]; then
-        log_error "Version Ubuntu non LTS détectée : ${VERSION_ID:-inconnue}"
-        log_info "Server Setup est prévu uniquement pour Ubuntu Server LTS."
+    # Versions Ubuntu LTS supportées par Server Setup.
+    local supported_versions=(
+        "22.04"
+        "24.04"
+        "26.04"
+    )
+
+    local version_supported=false
+    local version
+
+    for version in "${supported_versions[@]}"; do
+        if [ "${VERSION_ID:-}" = "$version" ]; then
+            version_supported=true
+            break
+        fi
+    done
+
+    if [ "$version_supported" != true ]; then
+        log_error "Version Ubuntu non supportée : ${VERSION_ID:-inconnue}"
+        log_info "Versions LTS supportées : ${supported_versions[*]}"
         exit 1
     fi
 
     export VERSION_ID VERSION_CODENAME
+
+    log_info "Ubuntu ${VERSION_ID} LTS détecté."
 }

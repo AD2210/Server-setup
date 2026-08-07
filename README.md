@@ -1,6 +1,6 @@
 # Server Setup
 0) se connecter à l'instance vierge :
-ssh [User]@[Ip] -p [Port] 
+ssh [User]@[Ip] -p [Port] -i [Ssh_Key]
 par défaut l'option port pointe sur 22, elle est facultative
 
 1) maj et instalation git pour récupéré la config rapide :
