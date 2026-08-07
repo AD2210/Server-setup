@@ -27,22 +27,31 @@ install -d -m 700 -o root -g root "$PROVIDER_CONFIG_DIR"
 install -d -m 755 -o root -g root "$PROVIDER_RUNTIME_DIR"
 install -d -m 700 -o root -g root "$PROVIDER_STATE_DIR"
 
-PROVIDER_NAME="$(ask_input "Provider snapshot (manual/ovh/ionos)" "ovh")"
+PROVIDER_NAME="$(ask_input "Provider snapshot (none/manual/ovh/ionos)" "none")"
 
 case "$PROVIDER_NAME" in
-    manual|ovh|ionos) ;;
+    none|manual|ovh|ionos) ;;
     *)
         log_error "Provider inconnu : $PROVIDER_NAME"
         exit 1
         ;;
 esac
 
-PROVIDER_SOURCE="$MODULE_DIR/providers/$PROVIDER_NAME.sh"
+if [ "$PROVIDER_NAME" != "none" ]; then
 
-[ -f "$PROVIDER_SOURCE" ] || {
-    log_error "Adaptateur provider absent : $PROVIDER_SOURCE"
-    exit 1
-}
+    PROVIDER_SOURCE="$MODULE_DIR/providers/$PROVIDER_NAME.sh"
+
+    [ -f "$PROVIDER_SOURCE" ] || {
+        log_error "Adaptateur provider absent : $PROVIDER_SOURCE"
+        exit 1
+    }
+
+    # ... configuration OVH éventuelle ...
+
+    install -m 700 -o root -g root \
+        "$PROVIDER_SOURCE" \
+        "$PROVIDER_RUNTIME_DIR/provider-snapshot.sh"
+fi
 
 if [ "$PROVIDER_NAME" = "ovh" ]; then
     OVH_PY_SOURCE="$MODULE_DIR/providers/ovh.py"
@@ -161,6 +170,9 @@ EOF
 chmod 600 "$PROVIDER_CONFIG"
 
 case "$PROVIDER_NAME" in
+    none)
+        log_info "Snapshot fournisseur désactivé."
+        ;;
     manual)
         log_warn "Snapshot provider configuré en mode manuel."
         ;;

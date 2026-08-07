@@ -45,6 +45,23 @@ WantedBy=timers.target
 EOF
 }
 
+if [ "$PROVIDER_NAME" != "none" ]; then
+    create_service \
+        "server-setup-backup-provider" \
+        "Server Setup - Snapshot VPS fournisseur" \
+        "/usr/local/lib/server-setup/backup-provider-snapshot.sh"
+
+    create_timer \
+        "server-setup-backup-provider" \
+        "Server Setup - Timer snapshot VPS" \
+        "$PROVIDER_SCHEDULE"
+
+    run_quiet \
+        "Impossible d'activer le timer provider." \
+        systemctl enable --now server-setup-backup-provider.timer \
+        || exit 1
+fi
+
 create_service \
     "server-setup-backup-db" \
     "Server Setup - Sauvegarde PostgreSQL" \

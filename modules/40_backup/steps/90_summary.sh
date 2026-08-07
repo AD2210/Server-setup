@@ -28,7 +28,13 @@ $RCLONE_OK && log "  Stockage rclone .......... OK" || log_error "Stockage rclon
 $CONFIG_OK && log "  Configuration ............ OK" || log_error "Configuration ............ ERREUR"
 $DB_RUNTIME_OK && log "  Backup PostgreSQL ........ OK" || log_error "Backup PostgreSQL ........ ERREUR"
 $FILES_RUNTIME_OK && log "  Snapshot logique ......... OK" || log_error "Snapshot logique ......... ERREUR"
-$PROVIDER_RUNTIME_OK && log "  Snapshot provider ........ OK ($PROVIDER_NAME)" || log_error "Snapshot provider ........ ERREUR"
+if [ "$PROVIDER_NAME" = "none" ]; then
+    log "  Snapshot provider ........ DÉSACTIVÉ"
+else
+    $PROVIDER_RUNTIME_OK \
+        && log "  Snapshot provider ........ OK ($PROVIDER_NAME)" \
+        || log_error "Snapshot provider ........ ERREUR"
+fi
 $TIMERS_OK && log "  Timers systemd ........... OK" || log_error "Timers systemd ........... ERREUR"
 log ""
 
