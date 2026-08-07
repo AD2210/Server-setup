@@ -5,14 +5,12 @@
 ## Orchestrateur principal
 ##
 ## Ce script :
-## - résout le chemin réel du projet, y compris via un lien symbolique
+## - résout le chemin réel du projet
 ## - charge les librairies communes
 ## - contrôle les prérequis globaux
-## - vérifie les privilèges administrateur
-## - vérifie Ubuntu Server LTS
-## - vérifie l'arborescence du projet
-## - charge la configuration globale
-## - exécute les modules dans un environnement isolé
+## - charge la configuration du projet
+## - route les commandes vers les modules
+## - exécute chaque module dans un sous-shell isolé
 ## ============================================================================
 
 set -euo pipefail
@@ -27,6 +25,7 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
     SOURCE="$(readlink "$SOURCE")"
+
     [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 
@@ -44,12 +43,36 @@ source "$PROJECT_DIR/lib/system.sh"
 
 
 # ----------------------------------------------------------------------------
-# Fonctions d'orchestration
+# Aide
 # ----------------------------------------------------------------------------
 
 usage() {
-    log "Usage : sudo setup {all|system|security|security-deluser|docker|proxy|backup}"
+    log ""
+    log "Usage : sudo setup <commande>"
+    log ""
+    log "Commandes disponibles :"
+    log ""
+    log "  all                 Exécute tous les modules disponibles"
+    log "  system              Préparation et mise à jour du système"
+    log "  security            Sécurisation utilisateurs, SSH, UFW, Fail2ban"
+    log "  security-deluser    Suppression de l'utilisateur fournisseur"
+    log "  docker              Installation et configuration Docker"
+    log "  proxy               Configuration du reverse proxy Caddy"
+    log "  backup              Configuration des sauvegardes"
+    log "  restore             Restauration des sauvegardes"
+    log "  logrotate           Configuration de la rotation des logs"
+    log "  updates             Configuration des mises à jour automatiques"
+    log "  reboot              Configuration du redémarrage périodique"
+    log "  healthcheck         Configuration du monitoring / healthcheck"
+    log "  finalize            Audit et finalisation du serveur"
+    log "  help                Affiche cette aide"
+    log ""
 }
+
+
+# ----------------------------------------------------------------------------
+# Exécution d'un module
+# ----------------------------------------------------------------------------
 
 run_module() {
     local module="$1"
@@ -61,23 +84,34 @@ run_module() {
         return 1
     fi
 
-    # Sous-shell :
-    # - hérite des fonctions chargées par setup ;
-    # - isole les variables et options du module ;
-    # - évite de re-sourcer les librairies dans chaque install.sh.
     (
         source "$module_file"
     )
 }
 
+
+# ----------------------------------------------------------------------------
+# Exécution de tous les modules
+# ----------------------------------------------------------------------------
+
 run_all_modules() {
     local module_dir
+    local module_name
 
     for module_dir in "$PROJECT_DIR"/modules/*; do
         [ -d "$module_dir" ] || continue
         [ -f "$module_dir/install.sh" ] || continue
 
-        run_module "$(basename "$module_dir")"
+        module_name="$(basename "$module_dir")"
+
+        # Modules volontairement exclus du mode automatique.
+        case "$module_name" in
+            11_security_deluser|41_restore|80_healthcheck)
+                continue
+                ;;
+        esac
+
+        run_module "$module_name"
     done
 }
 
@@ -105,33 +139,68 @@ log_info "Projet : $PROJECT_DIR"
 COMMAND="${1:-}"
 
 case "$COMMAND" in
+
     all|install)
         run_all_modules
         ;;
+
     system)
         run_module "00_system"
         ;;
+
     security)
         run_module "10_security"
         ;;
+
     security-deluser)
         run_module "11_security_deluser"
-        ;;        
+        ;;
+
     docker)
         run_module "20_docker"
         ;;
-    proxy)
+
+    proxy|reverse-proxy)
         run_module "30_reverse_proxy"
         ;;
+
     backup)
         run_module "40_backup"
         ;;
+
     restore)
         run_module "41_restore"
         ;;
+
+    logrotate|logs)
+        run_module "50_logrotate"
+        ;;
+
+    updates|update)
+        run_module "60_updates"
+        ;;
+
+    reboot)
+        run_module "70_reboot"
+        ;;
+
+    healthcheck|monitoring)
+        if [ -f "$PROJECT_DIR/modules/80_healthcheck/install.sh" ]; then
+            run_module "80_healthcheck"
+        else
+            log_warn "Le module healthcheck n'est pas encore installé."
+            log_info "Emplacement réservé : modules/80_healthcheck"
+        fi
+        ;;
+
+    finalize|check)
+        run_module "90_finalize"
+        ;;
+
     help|-h|--help|"")
         usage
         ;;
+
     *)
         log_error "Commande inconnue : $COMMAND"
         usage
