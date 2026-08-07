@@ -1,38 +1,134 @@
 #!/usr/bin/env bash
-set -e
 
-# Résout le chemin réel même avec symlink
+## ============================================================================
+## Server Setup
+## Orchestrateur principal
+##
+## Ce script :
+## - résout le chemin réel du projet, y compris via un lien symbolique
+## - charge les librairies communes
+## - contrôle les prérequis globaux
+## - vérifie les privilèges administrateur
+## - vérifie Ubuntu Server LTS
+## - vérifie l'arborescence du projet
+## - charge la configuration globale
+## - exécute les modules dans un environnement isolé
+## ============================================================================
+
+set -euo pipefail
+
+
+# ----------------------------------------------------------------------------
+# Résolution du chemin réel du projet
+# ----------------------------------------------------------------------------
+
 SOURCE="${BASH_SOURCE[0]}"
+
 while [ -h "$SOURCE" ]; do
-  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+    DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
 done
-BASE_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
-source "$BASE_DIR/lib/log.sh"
-source "$BASE_DIR/lib/utils.sh"
+PROJECT_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
-load_env
 
-run_all_modules() {
-  for module in "$BASE_DIR/modules/"*; do
-    run_module "$(basename "$module")"
-  done
+# ----------------------------------------------------------------------------
+# Chargement des librairies
+# ----------------------------------------------------------------------------
+
+source "$PROJECT_DIR/lib/log.sh"
+source "$PROJECT_DIR/lib/prompt.sh"
+source "$PROJECT_DIR/lib/utils.sh"
+source "$PROJECT_DIR/lib/system.sh"
+
+
+# ----------------------------------------------------------------------------
+# Fonctions d'orchestration
+# ----------------------------------------------------------------------------
+
+usage() {
+    log "Usage : sudo setup {all|system|security|docker|proxy|backup}"
 }
 
 run_module() {
-  local module="$1"
-  log_module "Running module: $module"
-  bash "$BASE_DIR/modules/$module/install.sh"
+    local module="$1"
+    local module_file="$PROJECT_DIR/modules/$module/install.sh"
+
+    if [ ! -f "$module_file" ]; then
+        log_error "Module introuvable : $module"
+        log_info "Fichier attendu : $module_file"
+        return 1
+    fi
+
+    # Sous-shell :
+    # - hérite des fonctions chargées par setup ;
+    # - isole les variables et options du module ;
+    # - évite de re-sourcer les librairies dans chaque install.sh.
+    (
+        source "$module_file"
+    )
 }
 
-case "$1" in
-  all|install) run_all_modules ;;
-  system) run_module "00_system" ;;
-  security) run_module "10_security" ;;
-  docker) run_module "20_docker" ;;
-  proxy) run_module "30_reverse_proxy" ;;
-  backup) run_module "40_backup" ;;
-  *) echo "Usage: setup {all|system|security|docker|proxy|backup}" ;;
+run_all_modules() {
+    local module_dir
+
+    for module_dir in "$PROJECT_DIR"/modules/*; do
+        [ -d "$module_dir" ] || continue
+        [ -f "$module_dir/install.sh" ] || continue
+
+        run_module "$(basename "$module_dir")"
+    done
+}
+
+
+# ----------------------------------------------------------------------------
+# Préflight global
+# ----------------------------------------------------------------------------
+
+log_module "Initialisation de Server Setup"
+
+require_root
+require_ubuntu_lts
+require_project_structure "$PROJECT_DIR"
+
+load_env "$PROJECT_DIR/config/default.env"
+
+log_info "Système : Ubuntu ${VERSION_ID:-inconnue} (${VERSION_CODENAME:-inconnue})"
+log_info "Projet : $PROJECT_DIR"
+
+
+# ----------------------------------------------------------------------------
+# Routage des commandes
+# ----------------------------------------------------------------------------
+
+COMMAND="${1:-}"
+
+case "$COMMAND" in
+    all|install)
+        run_all_modules
+        ;;
+    system)
+        run_module "00_system"
+        ;;
+    security)
+        run_module "10_security"
+        ;;
+    docker)
+        run_module "20_docker"
+        ;;
+    proxy)
+        run_module "30_reverse_proxy"
+        ;;
+    backup)
+        run_module "40_backup"
+        ;;
+    help|-h|--help|"")
+        usage
+        ;;
+    *)
+        log_error "Commande inconnue : $COMMAND"
+        usage
+        exit 1
+        ;;
 esac
