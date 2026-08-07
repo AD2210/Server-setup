@@ -18,3 +18,25 @@ confirm() {
     * ) return 1 ;;
   esac
 }
+
+run_quiet() {
+    local message="$1"
+    shift
+
+    local error_file
+    error_file="$(mktemp)"
+
+    if "$@" >/dev/null 2>"$error_file"; then
+        rm -f "$error_file"
+        return 0
+    fi
+
+    log_error "$message"
+
+    if [ -s "$error_file" ]; then
+        cat "$error_file" >&2
+    fi
+
+    rm -f "$error_file"
+    return 1
+}

@@ -23,7 +23,7 @@ run_all_modules() {
 
 run_module() {
   local module="$1"
-  log_info "Running module: $module"
+  log_module "Running module: $module"
   bash "$BASE_DIR/modules/$module/install.sh"
 }
 
