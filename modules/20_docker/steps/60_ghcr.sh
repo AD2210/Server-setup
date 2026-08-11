@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 log_step "Configuration de GitHub Container Registry"
 
-GHCR_ENABLED=false
 GHCR_REGISTRY="ghcr.io"
 
-if declare -F config_has >/dev/null 2>&1 && config_has "GHCR_ENABLED"; then
-    confirm "Configurer GitHub Container Registry ?" "GHCR_ENABLED" "false" && GHCR_ENABLED=true
+if $NON_INTERACTIVE; then
+    if ! config_has "GHCR_ENABLED"; then
+        log_error "Valeur obligatoire absente : GHCR_ENABLED"
+        exit 1
+    fi
+
+    if confirm "Configurer GitHub Container Registry ?" "GHCR_ENABLED"; then
+        GHCR_ENABLED=true
+    else
+        GHCR_ENABLED=false
+    fi
 else
-    confirm "Configurer GitHub Container Registry ?" && GHCR_ENABLED=true
+    if confirm "Configurer GitHub Container Registry ?"; then
+        GHCR_ENABLED=true
+    else
+        GHCR_ENABLED=false
+    fi
 fi
 
 if ! $GHCR_ENABLED; then
