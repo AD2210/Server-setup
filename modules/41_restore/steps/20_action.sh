@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 log_step "Choix de la restauration"
 
+log ""
 log "  1) Restaurer une base PostgreSQL"
 log "  2) Extraire un snapshot logique en staging"
-log "  3) Afficher la procédure de disaster recovery"
+log "  3) Restaurer une release Docker"
+log "  4) Procédure de disaster recovery"
+log ""
 
 ACTION="$(ask_input "Choix" "1")"
 
@@ -131,6 +134,7 @@ show_dr() {
 case "$ACTION" in
     1) restore_db ;;
     2) restore_files ;;
-    3) show_dr ;;
+    3) ;;
+    4) show_dr ;;
     *) log_error "Choix invalide : $ACTION"; exit 1 ;;
 esac
