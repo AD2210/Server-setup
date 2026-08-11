@@ -2,15 +2,7 @@
 
 ## ============================================================================
 ## Server Setup
-## Orchestrateur principal
-##
-## Ce script :
-## - résout le chemin réel du projet
-## - charge les librairies communes
-## - contrôle les prérequis globaux
-## - charge la configuration du projet
-## - route les commandes vers les modules
-## - exécute chaque module dans un sous-shell isolé
+## Orchestrateur principal - compatible interactif / unattended
 ## ============================================================================
 
 set -euo pipefail
@@ -25,7 +17,6 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
     DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
     SOURCE="$(readlink "$SOURCE")"
-
     [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 
@@ -33,70 +24,98 @@ PROJECT_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
 
 # ----------------------------------------------------------------------------
-# Chargement des librairies
+# Librairies
 # ----------------------------------------------------------------------------
 
 source "$PROJECT_DIR/lib/log.sh"
+source "$PROJECT_DIR/lib/config.sh"
 source "$PROJECT_DIR/lib/prompt.sh"
 source "$PROJECT_DIR/lib/utils.sh"
 source "$PROJECT_DIR/lib/system.sh"
 
 
 # ----------------------------------------------------------------------------
-# Aide
+# Arguments
 # ----------------------------------------------------------------------------
+
+COMMAND=""
+ARG_CONFIG=""
+ARG_SECRETS=""
 
 usage() {
     log ""
-    log "Usage : sudo setup <commande>"
+    log "Usage : sudo setup <commande> [options]"
     log ""
-    log "Commandes disponibles :"
+    log "Options :"
+    log "  --config FILE          Charge une configuration"
+    log "  --secrets FILE         Charge les secrets depuis un fichier root-only"
+    log "  --non-interactive      Interdit toute saisie interactive"
+    log "  -h, --help             Affiche l'aide"
     log ""
-    log "  all                 Exécute tous les modules disponibles"
-    log "  system              Préparation et mise à jour du système"
-    log "  security            Sécurisation utilisateurs, SSH, UFW, Fail2ban"
-    log "  security-deluser    Suppression de l'utilisateur fournisseur"
-    log "  docker              Installation et configuration Docker"
-    log "  proxy               Configuration du reverse proxy Caddy"
-    log "  backup              Configuration des sauvegardes"
-    log "  restore             Restauration des sauvegardes"
-    log "  logrotate           Configuration de la rotation des logs"
-    log "  updates             Configuration des mises à jour automatiques"
-    log "  reboot              Configuration du redémarrage périodique"
-    log "  healthcheck         Configuration du monitoring / healthcheck"
-    log "  finalize            Audit et finalisation du serveur"
-    log "  help                Affiche cette aide"
+    log "Exemples :"
+    log "  sudo setup security"
+    log "  sudo setup all --config ./setup.conf"
+    log "  sudo setup all --config ./setup.conf --secrets ./secrets.conf --non-interactive"
     log ""
 }
 
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --config)
+            [ "$#" -ge 2 ] || { log_error "--config nécessite un fichier."; exit 1; }
+            ARG_CONFIG="$2"
+            shift 2
+            ;;
+        --secrets)
+            [ "$#" -ge 2 ] || { log_error "--secrets nécessite un fichier."; exit 1; }
+            ARG_SECRETS="$2"
+            shift 2
+            ;;
+        --non-interactive)
+            NON_INTERACTIVE=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*)
+            log_error "Option inconnue : $1"
+            exit 1
+            ;;
+        *)
+            if [ -z "$COMMAND" ]; then
+                COMMAND="$1"
+                shift
+            else
+                log_error "Argument inattendu : $1"
+                exit 1
+            fi
+            ;;
+    esac
+done
+
 
 # ----------------------------------------------------------------------------
-# Exécution d'un module
+# Exécution des modules
 # ----------------------------------------------------------------------------
 
 run_module() {
     local module="$1"
     local module_file="$PROJECT_DIR/modules/$module/install.sh"
 
-    if [ ! -f "$module_file" ]; then
+    [ -f "$module_file" ] || {
         log_error "Module introuvable : $module"
-        log_info "Fichier attendu : $module_file"
         return 1
-    fi
+    }
 
     (
         source "$module_file"
     )
 }
 
-
-# ----------------------------------------------------------------------------
-# Exécution de tous les modules
-# ----------------------------------------------------------------------------
-
 run_all_modules() {
-    local module_dir
-    local module_name
+    local module_dir module_name
 
     for module_dir in "$PROJECT_DIR"/modules/*; do
         [ -d "$module_dir" ] || continue
@@ -104,7 +123,6 @@ run_all_modules() {
 
         module_name="$(basename "$module_dir")"
 
-        # Modules volontairement exclus du mode automatique.
         case "$module_name" in
             11_security_deluser|41_restore|80_healthcheck)
                 continue
@@ -117,7 +135,7 @@ run_all_modules() {
 
 
 # ----------------------------------------------------------------------------
-# Préflight global
+# Préflight
 # ----------------------------------------------------------------------------
 
 log_module "Initialisation de Server Setup"
@@ -126,81 +144,60 @@ require_root
 require_ubuntu_lts
 require_project_structure "$PROJECT_DIR"
 
-load_env "$PROJECT_DIR/config/default.env"
+init_config "$ARG_CONFIG" "$ARG_SECRETS"
 
-log_info "Système : Ubuntu ${VERSION_ID:-inconnue} (${VERSION_CODENAME:-inconnue})"
-log_info "Projet : $PROJECT_DIR"
+if $NON_INTERACTIVE; then
+    log_info "Mode non interactif activé."
+fi
 
 
 # ----------------------------------------------------------------------------
-# Routage des commandes
+# Routing
 # ----------------------------------------------------------------------------
 
-COMMAND="${1:-}"
-
-case "$COMMAND" in
-
+case "${COMMAND:-}" in
     all|install)
         run_all_modules
         ;;
-
     system)
         run_module "00_system"
         ;;
-
     security)
         run_module "10_security"
         ;;
-
     security-deluser)
         run_module "11_security_deluser"
         ;;
-
     docker)
         run_module "20_docker"
         ;;
-
     proxy|reverse-proxy)
         run_module "30_reverse_proxy"
         ;;
-
     backup)
         run_module "40_backup"
         ;;
-
     restore)
         run_module "41_restore"
         ;;
-
     logrotate|logs)
         run_module "50_logrotate"
         ;;
-
     updates|update)
         run_module "60_updates"
         ;;
-
     reboot)
         run_module "70_reboot"
         ;;
-
     healthcheck|monitoring)
-        if [ -f "$PROJECT_DIR/modules/80_healthcheck/install.sh" ]; then
-            run_module "80_healthcheck"
-        else
-            log_warn "Le module healthcheck n'est pas encore installé."
-            log_info "Emplacement réservé : modules/80_healthcheck"
-        fi
+        run_module "80_healthcheck"
         ;;
-
     finalize|check)
         run_module "90_finalize"
         ;;
-
-    help|-h|--help|"")
+    help|"")
         usage
         ;;
-
     *)
         log_error "Commande inconnue : $COMMAND"
         usage
