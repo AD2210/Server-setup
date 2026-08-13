@@ -5,7 +5,7 @@ APPS_ROOT="/srv/apps"
 die(){ printf '[RELEASE][ERROR] %s\n' "$*" >&2; exit 1; }
 resolve_app_dir(){ [[ "$1" = /* ]] && printf '%s\n' "$1" || printf '%s/%s\n' "$APPS_ROOT" "$1"; }
 normalize_service(){ printf '%s' "$1" | tr '[:lower:].-' '[:upper:]__' | tr -cd 'A-Z0-9_'; }
-env_file(){ printf '%s/.env.prod.local\n' "$1"; }
+env_file(){ printf '%s/.env\n' "$1"; }
 get_value(){ sed -n -E "s/^$2=(.*)$/\\1/p" "$1" | tail -n1; }
 set_value(){
     local file="$1" key="$2" value="$3" tmp
