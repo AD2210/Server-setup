@@ -60,3 +60,31 @@ require_ubuntu_lts() {
 
     log_info "Ubuntu ${VERSION_ID} LTS détecté."
 }
+
+wait_for_apt() {
+    local timeout="${1:-600}"
+    local elapsed=0
+    local interval=5
+
+    log_step "Vérification de la disponibilité APT"
+
+    while true; do
+        if ! pgrep -f 'apt|apt-get|dpkg|unattended-upgrade' >/dev/null 2>&1; then
+            log_info "APT est disponible."
+            return 0
+        fi
+
+        if [ "$elapsed" -ge "$timeout" ]; then
+            log_error "APT est toujours occupé après ${timeout}s."
+            log_info "Vérifiez : systemctl status apt-daily-upgrade.service"
+            return 1
+        fi
+
+        if [ "$elapsed" -eq 0 ]; then
+            log_info "Une opération APT est déjà en cours, attente de sa fin..."
+        fi
+
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+}
