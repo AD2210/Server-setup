@@ -26,6 +26,17 @@ CADDY_APPS_SOURCE="$PROJECT_DIR/config/apps"
 if [ ! -e "$CADDYFILE" ]; then
     install -m 644 -o root -g root "$CADDY_TEMPLATE" "$CADDYFILE"
     log_info "Caddyfile serveur installé : $CADDYFILE"
+elif ! grep -Fq 'import apps/*.caddy' "$CADDYFILE"; then
+    CADDY_MIGRATION_BACKUP="$CADDYFILE.migration.$(date +%Y%m%d-%H%M%S)"
+
+    if ! cp -a "$CADDYFILE" "$CADDY_MIGRATION_BACKUP"; then
+        log_error "Impossible de sauvegarder l'ancien Caddyfile avant migration."
+        exit 1
+    fi
+
+    install -m 644 -o root -g root "$CADDY_TEMPLATE" "$CADDYFILE"
+    log_warn "Ancien Caddyfile remplacé par le socle serveur."
+    log_info "Sauvegarde de migration : $CADDY_MIGRATION_BACKUP"
 else
     log_info "Caddyfile existant conservé : $CADDYFILE"
 fi
