@@ -1,0 +1,56 @@
+name: QA
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system linters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck yamllint
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Markdownlint
+        run: npm install --global markdownlint-cli
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install shfmt
+        run: |
+          go install mvdan.cc/sh/v3/cmd/shfmt@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Install Rust and Taplo
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install Taplo
+        run: cargo install taplo-cli --locked
+
+      - name: Install Caddy
+        run: |
+          curl --fail --silent --show-error --location \
+            https://dl.cloudsmith.io/public/caddy/stable/setup.deb.sh | sudo -E bash
+          sudo apt-get install -y caddy
+
+      - name: Run static QA
+        run: qa/lint.sh

@@ -106,10 +106,10 @@ run_tomllint() {
 }
 
 run_yaml_lint() {
-    rg --files "$PROJECT_DIR" -g '*.yml' -g '*.yaml' >/dev/null 2>&1 || return 0
+    rg --hidden --files "$PROJECT_DIR" -g '!.git/**' -g '*.yml' -g '*.yaml' >/dev/null 2>&1 || return 0
     require_tool yamllint || return 0
 
-    if yamllint $(rg --files "$PROJECT_DIR" -g '*.yml' -g '*.yaml' | sort); then
+    if yamllint $(rg --hidden --files "$PROJECT_DIR" -g '!.git/**' -g '*.yml' -g '*.yaml' | sort); then
         log_ok "Yamllint"
     else
         log_error "Yamllint"
