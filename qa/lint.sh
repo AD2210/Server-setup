@@ -54,14 +54,19 @@ require_tool() {
 
 run_bash_syntax() {
     local file
+    local count=0
 
     while IFS= read -r file; do
         if bash -n "$file"; then
-            log_ok "Syntaxe Bash : ${file#"$PROJECT_DIR/"}"
+            count=$((count + 1))
         else
             log_error "Syntaxe Bash invalide : ${file#"$PROJECT_DIR/"}"
         fi
     done < <(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort)
+
+    if [ "$FAILED" = false ]; then
+        log_ok "Syntaxe Bash ($count fichiers)"
+    fi
 }
 
 run_shellcheck() {
