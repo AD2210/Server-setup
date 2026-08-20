@@ -41,6 +41,7 @@ server-release show app1
 ```
 
 Restauration :
+
 - le module `sudo setup restore` liste les snapshots fichier disponibles ;
 - l'utilisateur sélectionne le snapshot par date ;
 - le `.env.prod.local` contenu dans le snapshot est utilisé temporairement ;
