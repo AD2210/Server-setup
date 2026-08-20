@@ -225,7 +225,9 @@ if $FAILED; then
     done
 
     for detail in "${ERROR_DETAILS[@]}"; do
-        printf '\n[QA][DETAIL]\n%s\n' "$detail" >&2
+        detail_name="${detail%%$'\n'*}"
+        detail_output="${detail#*$'\n'}"
+        printf '\n[QA][DETAIL] %s\n%s\n' "$detail_name" "$detail_output" >&2
     done
 
     exit 1
