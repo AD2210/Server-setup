@@ -37,7 +37,7 @@ validate_config_file() {
     local invalid_lines
     invalid_lines="$(
         grep -nEv \
-            '^[[:space:]]*($|#|[A-Za-z_][A-Za-z0-9_]*="([^"\\]|\\.)*"|[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9._:/,@+%=-]+)[[:space:]]*$' \
+            '^[[:space:]]*($|#.*|[A-Za-z_][A-Za-z0-9_]*="([^"\\]|\\.)*"|[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9._:/,@+%=-]+)[[:space:]]*$' \
             "$file" \
             || true
     )"
