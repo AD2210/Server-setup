@@ -169,6 +169,8 @@ sudo setup security
 sudo setup docker
 sudo setup reverse-proxy
 sudo setup backup
+sudo setup monitoring
+sudo setup finalize
 ```
 
 Cette méthode facilite les tests et permet de valider la configuration du serveur étape par étape.
@@ -681,6 +683,37 @@ sudo journalctl -u server-setup-backup-provider.service -n 100 --no-pager
 ```
 
 Le même principe peut être appliqué aux autres services de backup.
+
+---
+
+# 8. Restore
+
+```bash
+sudo setup restore
+```
+
+Le module liste d'abord les backups locaux disponibles dans
+`/var/backups/server-setup`, puis les backups distants rclone. Les copies
+locales sont proposées en premier et chaque choix est identifié par sa source
+et sa date (`local:<date>` ou `remote:<date>`).
+
+## Restauration PostgreSQL
+
+La restauration DB :
+
+1. arrête les services applicatifs en conservant PostgreSQL disponible ;
+2. termine les connexions ouvertes ;
+3. supprime puis recrée la base ;
+4. recharge le dump avec `pg_restore` ;
+5. relance Compose et vérifie `pg_isready`.
+
+L'image PostgreSQL n'est pas choisie par le backup : elle reste celle définie
+par le fichier Compose de l'application.
+
+## Restauration d'une release
+
+Une release est extraite depuis le `.env.prod.local` du snapshot fichier
+sélectionné, puis déployée avec le Compose présent dans `/srv/apps/<app>`.
 
 ---
 

@@ -41,6 +41,8 @@ server-release show app1
 ```
 
 Restauration :
-- `current` recharge le dernier SHA connu ;
-- `previous` recharge le SHA précédent via un env temporaire ;
-- `.env.prod.local` n'est pas modifié pendant le rollback.
+- le module `sudo setup restore` liste les snapshots fichier disponibles ;
+- l'utilisateur sélectionne le snapshot par date ;
+- le `.env.prod.local` contenu dans le snapshot est utilisé temporairement ;
+- `.env.prod.local` présent sur le serveur n'est pas modifié ;
+- Compose tire puis démarre les images correspondant au snapshot sélectionné.
