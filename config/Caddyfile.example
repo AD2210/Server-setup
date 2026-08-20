@@ -1,10 +1,13 @@
 {
 	# L'API d'administration reste locale pour Ember et les opérations admin.
 	admin localhost:2019
+	import snippets/metrics.caddy
 }
 
 # Configuration serveur commune.
-import snippets/*.caddy
+import snippets/security.caddy
+import snippets/logging.caddy
+import snippets/cache.caddy
 
 # Les applications sont ajoutées et supprimées par la CD.
 import apps/*.caddy

@@ -124,7 +124,7 @@ run_all_modules() {
         module_name="$(basename "$module_dir")"
 
         case "$module_name" in
-            11_security_deluser|41_restore|80_healthcheck)
+            11_security_deluser|41_restore)
                 continue
                 ;;
         esac
@@ -195,7 +195,7 @@ case "${COMMAND:-}" in
         run_module "70_reboot"
         ;;
     healthcheck|monitoring)
-        run_module "80_healthcheck"
+        run_module "80_monitoring"
         ;;
     finalize|check)
         run_module "90_finalize"

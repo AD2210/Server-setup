@@ -1,6 +1,9 @@
 {
     admin localhost:2019
+    import snippets/metrics.caddy
 }
 
-import snippets/*.caddy
+import snippets/security.caddy
+import snippets/logging.caddy
+import snippets/cache.caddy
 import apps/*.caddy

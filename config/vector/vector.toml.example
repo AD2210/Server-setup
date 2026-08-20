@@ -1,0 +1,69 @@
+# Vector - Server Setup
+# Les sinks utilisent des URLs séparées afin de permettre un routage par type
+# de journal lorsque l'API centrale sera finalisée.
+
+[sources.system_journal]
+type = "journald"
+include_units = ["caddy.service", "docker.service", "ssh.service", "fail2ban.service", "vector.service"]
+
+[sources.docker]
+type = "docker_logs"
+
+[sources.symfony]
+type = "file"
+include = ["/srv/apps/*/var/log/*.log"]
+read_from = "end"
+
+[transforms.system_json]
+type = "remap"
+inputs = ["system_journal"]
+source = '''
+.instance = get_env_var!("VECTOR_INSTANCE")
+.log_type = "system"
+'''
+
+[transforms.docker_json]
+type = "remap"
+inputs = ["docker"]
+source = '''
+.instance = get_env_var!("VECTOR_INSTANCE")
+.log_type = "docker"
+'''
+
+[transforms.symfony_json]
+type = "remap"
+inputs = ["symfony"]
+source = '''
+.instance = get_env_var!("VECTOR_INSTANCE")
+.log_type = "symfony"
+if exists(.file) {
+  parsed, err = parse_regex(.file, r'/srv/apps/(?P<app>[^/]+)/')
+  if err == null {
+    .app = parsed.app
+  }
+}
+'''
+
+[sinks.system_monitoring]
+type = "http"
+inputs = ["system_json"]
+uri = "${VECTOR_SYSTEM_LOG_ENDPOINT}"
+method = "post"
+encoding.codec = "json"
+request.headers.Content-Type = "application/json"
+
+[sinks.docker_monitoring]
+type = "http"
+inputs = ["docker_json"]
+uri = "${VECTOR_DOCKER_LOG_ENDPOINT}"
+method = "post"
+encoding.codec = "json"
+request.headers.Content-Type = "application/json"
+
+[sinks.symfony_monitoring]
+type = "http"
+inputs = ["symfony_json"]
+uri = "${VECTOR_SYMFONY_LOG_ENDPOINT}"
+method = "post"
+encoding.codec = "json"
+request.headers.Content-Type = "application/json"

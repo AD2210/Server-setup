@@ -963,11 +963,35 @@ Server Setup configure l'infrastructure du serveur mais ne remplace pas le pipel
 
 # 18. Monitoring / Healthcheck
 
-Le monitoring et les healthchecks sont prévus sous la forme d'une stack adjacente dédiée.
+```bash
+sudo setup monitoring
+```
 
-Cette partie est actuellement maintenue séparément et sera intégrée à Server Setup une fois son fonctionnement finalisé.
+Le module installe :
 
-Le futur module devra pouvoir s'intégrer à l'orchestrateur sans dupliquer les responsabilités des applications ou des services de backup.
+* Ember pour surveiller Caddy via son API locale et ses métriques ;
+* Vector pour collecter les journaux journald, Docker et Symfony ;
+* la configuration Caddy nécessaire à Ember (`metrics`).
+
+Vector convertit les événements en JSON et prévoit trois destinations :
+
+```text
+/etc/server-setup/monitoring/vector.env
+├── VECTOR_SYSTEM_LOG_ENDPOINT
+├── VECTOR_DOCKER_LOG_ENDPOINT
+└── VECTOR_SYMFONY_LOG_ENDPOINT
+```
+
+Les valeurs initiales utilisent l'endpoint provisoire suivant :
+
+```text
+https://monitoring.dsn-dev.fr/api/CHANGE_ME/logs/{type}
+```
+
+Tant que `CHANGE_ME` n'est pas remplacé par l'instance réelle, Vector reste
+installé mais désactivé. Les logs Symfony sont recherchés dans
+`/srv/apps/*/var/log/*.log`, tandis que les logs Docker sont lus via le socket
+Docker et les logs système via journald.
 
 ---
 
