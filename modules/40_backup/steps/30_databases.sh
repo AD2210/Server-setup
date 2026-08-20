@@ -51,19 +51,33 @@ EOF
     log_info "Cible PostgreSQL '$name' enregistrée."
 }
 
-if confirm "Configurer les sauvegardes PostgreSQL ?"; then
-    DB_BACKUP_ENABLED=true
+if config_has "DB_BACKUP_ENABLED"; then
+    if parse_boolean "$(config_get DB_BACKUP_ENABLED)"; then
+        DB_BACKUP_ENABLED=true
 
-    if compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null; then
-        log_info "Cibles PostgreSQL existantes :"
-        for target in "$BACKUP_TARGETS_DIR"/*.conf; do log "  $(basename "$target" .conf)"; done
+        compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null || {
+            log_error "DB_BACKUP_ENABLED est actif mais aucune cible PostgreSQL n'est installée."
+            log_info "Ajoutez des fichiers dans $BACKUP_TARGETS_DIR avant de relancer."
+            exit 1
+        }
+    else
+        log_info "Sauvegardes PostgreSQL désactivées par la configuration."
     fi
-
-    while confirm "Ajouter une base PostgreSQL ?"; do
-        add_database_target || log_warn "Cible ignorée."
-    done
-
-    compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null || DB_BACKUP_ENABLED=false
 else
-    log_info "Sauvegardes PostgreSQL désactivées."
+    if confirm "Configurer les sauvegardes PostgreSQL ?"; then
+        DB_BACKUP_ENABLED=true
+
+        if compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null; then
+            log_info "Cibles PostgreSQL existantes :"
+            for target in "$BACKUP_TARGETS_DIR"/*.conf; do log "  $(basename "$target" .conf)"; done
+        fi
+
+        while confirm "Ajouter une base PostgreSQL ?"; do
+            add_database_target || log_warn "Cible ignorée."
+        done
+
+        compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null || DB_BACKUP_ENABLED=false
+    else
+        log_info "Sauvegardes PostgreSQL désactivées."
+    fi
 fi

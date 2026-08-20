@@ -105,6 +105,20 @@ et une base :
 /etc/server-setup/backup/targets.d/my-app-db.conf
 ```
 
+Un exemple de cible PostgreSQL est fourni dans le dépôt :
+
+```text
+config/backup/targets.d/app-db.conf.example
+```
+
+Lorsque `DB_BACKUP_ENABLED="true"` est défini, les cibles doivent être
+préinstallées dans `/etc/server-setup/backup/targets.d/`. Le module ne lance
+pas d'assistant interactif dans ce mode.
+
+De même, une remote rclone doit être préparée dans
+`/etc/rclone/rclone.conf`. Utilisez `RCLONE_REMOTE` et
+`RCLONE_KEEP_EXISTING="true"` dans la configuration unattended.
+
 Cela évite d'introduire des pseudo-tableaux complexes dans `setup.conf`.
 
 ## Migration des modules

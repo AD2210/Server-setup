@@ -48,7 +48,7 @@ if [ "$CURRENT_SSH_PORT" != "$SSH_PORT" ]; then
     log "  4. Résultat attendu : root"
     log ""
 
-    if confirm "Fermer l'ancien port SSH ($CURRENT_SSH_PORT) ?"; then
+    if confirm "Fermer l'ancien port SSH ($CURRENT_SSH_PORT) ?" "CLOSE_OLD_SSH_PORT"; then
         if run_quiet \
             "Impossible de supprimer la règle UFW du port $CURRENT_SSH_PORT." \
             ufw delete allow "$CURRENT_SSH_PORT/tcp"; then

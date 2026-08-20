@@ -1,0 +1,10 @@
+# Copier ce fichier vers /etc/server-setup/backup/targets.d/<nom>.conf,
+# remplacer les valeurs, puis supprimer l'extension .example.
+
+TARGET_NAME="app-db"
+APP_DIR="/srv/apps/app1"
+COMPOSE_FILE="/srv/apps/app1/compose.yaml"
+DB_SERVICE="database"
+DB_NAME_ENV="POSTGRES_DB"
+DB_USER_ENV="POSTGRES_USER"
+DB_PASSWORD_ENV="POSTGRES_PASSWORD"

@@ -10,7 +10,7 @@ log "  logical  : snapshot logique uniquement"
 log "  provider : snapshot fournisseur uniquement"
 log "  both     : snapshot logique + fournisseur"
 
-SNAPSHOT_MODE="$(ask_input "Mode snapshot" "logical")"
+SNAPSHOT_MODE="$(ask_input "Mode snapshot" "logical" "SNAPSHOT_MODE")"
 
 case "$SNAPSHOT_MODE" in
     none) ;;
@@ -30,7 +30,7 @@ if $PROVIDER_BACKUP_ENABLED; then
     install -d -m 755 -o root -g root "$PROVIDER_RUNTIME_DIR"
     install -d -m 700 -o root -g root "$PROVIDER_STATE_DIR"
 
-    PROVIDER_NAME="$(ask_input "Provider snapshot (manual/ovh/ionos)" "manual")"
+    PROVIDER_NAME="$(ask_input "Provider snapshot (manual/ovh/ionos)" "manual" "PROVIDER_NAME")"
 
     case "$PROVIDER_NAME" in
         manual|ovh|ionos) ;;
@@ -52,13 +52,35 @@ if $PROVIDER_BACKUP_ENABLED; then
 
         install -m 700 -o root -g root "$MODULE_DIR/providers/ovh.py"             "$PROVIDER_RUNTIME_DIR/ovh-provider.py"
 
-        if [ -r "$OVH_CONFIG" ] && confirm "Conserver la configuration OVH existante ?"; then
+        KEEP_OVH_CONFIG=false
+        if [ -r "$OVH_CONFIG" ]; then
+            if $NON_INTERACTIVE; then
+                if confirm_required "Conserver la configuration OVH existante ?" "OVH_KEEP_EXISTING"; then
+                    KEEP_OVH_CONFIG=true
+                elif [ "$?" -eq 2 ]; then
+                    exit 1
+                fi
+            elif confirm "Conserver la configuration OVH existante ?"; then
+                KEEP_OVH_CONFIG=true
+            fi
+        fi
+
+        if $KEEP_OVH_CONFIG; then
             log_info "Configuration OVH conservée."
         else
-            OVH_ENDPOINT="$(ask_input "Endpoint OVH" "ovh-eu")"
-            OVH_APPLICATION_KEY="$(ask_input "Application Key" "")"
-            read -r -s -p "Application Secret: " OVH_APPLICATION_SECRET; echo ""
-            OVH_CONSUMER_KEY="$(ask_input "Consumer Key" "")"
+            OVH_ENDPOINT="$(ask_input "Endpoint OVH" "ovh-eu" "OVH_ENDPOINT")"
+            OVH_APPLICATION_KEY="$(ask_input "Application Key" "" "OVH_APPLICATION_KEY")"
+
+            if config_has "OVH_APPLICATION_SECRET"; then
+                OVH_APPLICATION_SECRET="$(config_get OVH_APPLICATION_SECRET)"
+            elif $NON_INTERACTIVE; then
+                log_error "OVH_APPLICATION_SECRET absent en mode non interactif."
+                exit 1
+            else
+                read -r -s -p "Application Secret: " OVH_APPLICATION_SECRET; echo ""
+            fi
+
+            OVH_CONSUMER_KEY="$(ask_input "Consumer Key" "" "OVH_CONSUMER_KEY")"
 
             [ -n "$OVH_APPLICATION_KEY" ] && [ -n "$OVH_APPLICATION_SECRET" ] && [ -n "$OVH_CONSUMER_KEY" ] || {
                 log_error "Credentials OVH incomplets."
@@ -85,7 +107,7 @@ EOF
             log_info "VPS accessibles :"
             while IFS= read -r vps; do log "  $vps"; done <<< "$VPS_LIST"
 
-            OVH_SERVICE_NAME="$(ask_input "Service OVH du VPS" "$(head -n1 <<< "$VPS_LIST")")"
+            OVH_SERVICE_NAME="$(ask_input "Service OVH du VPS" "$(head -n1 <<< "$VPS_LIST")" "OVH_SERVICE_NAME")"
             grep -qxF "$OVH_SERVICE_NAME" <<< "$VPS_LIST" || {
                 log_error "VPS OVH inaccessible avec ce token."
                 exit 1

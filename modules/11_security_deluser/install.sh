@@ -34,7 +34,7 @@ log_info "Session administrateur détectée : $CURRENT_USER"
 # Saisie de l'utilisateur à supprimer
 # ----------------------------------------------------------------------------
 
-TARGET_USER=$(ask_input "Utilisateur initial à supprimer" "ubuntu")
+TARGET_USER=$(ask_input "Utilisateur initial à supprimer" "ubuntu" "INITIAL_USER")
 
 if [ -z "$TARGET_USER" ]; then
     log_error "Aucun utilisateur renseigné."
@@ -79,7 +79,7 @@ fi
 
 log_warn "Cette opération supprimera le compte et son dossier personnel."
 
-if ! confirm "Supprimer définitivement '$TARGET_USER' ?"; then
+if ! confirm "Supprimer définitivement '$TARGET_USER' ?" "DELETE_INITIAL_USER"; then
     log_info "Suppression annulée."
     exit 0
 fi

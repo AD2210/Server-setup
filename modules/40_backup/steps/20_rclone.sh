@@ -16,12 +16,34 @@ if [ -n "$REMOTES" ]; then
         [ -n "$remote" ] && log "  ${remote%:}"
     done <<< "$REMOTES"
 
-    if ! confirm "Conserver la configuration rclone existante ?"; then
+    KEEP_RCLONE_CONFIG=false
+    if $NON_INTERACTIVE; then
+        if confirm_required "Conserver la configuration rclone existante ?" "RCLONE_KEEP_EXISTING"; then
+            KEEP_RCLONE_CONFIG=true
+        elif [ "$?" -eq 2 ]; then
+            exit 1
+        fi
+    elif confirm "Conserver la configuration rclone existante ?"; then
+        KEEP_RCLONE_CONFIG=true
+    fi
+
+    if ! $KEEP_RCLONE_CONFIG; then
+        if $NON_INTERACTIVE; then
+            log_error "La reconfiguration rclone nécessite une action interactive."
+            exit 1
+        fi
         rclone config --config "$RCLONE_CONFIG"
         REMOTES="$(rclone listremotes --config "$RCLONE_CONFIG" 2>/dev/null || true)"
     fi
 else
     log_warn "Aucune remote rclone configurée."
+
+    if $NON_INTERACTIVE; then
+        log_error "Aucune remote rclone configurée en mode non interactif."
+        log_info "Préparez $RCLONE_CONFIG avant de relancer le module."
+        exit 1
+    fi
+
     rclone config --config "$RCLONE_CONFIG"
     REMOTES="$(rclone listremotes --config "$RCLONE_CONFIG" 2>/dev/null || true)"
 fi
@@ -29,7 +51,7 @@ fi
 [ -n "$REMOTES" ] || { log_error "Aucune remote rclone disponible."; exit 1; }
 
 DEFAULT_REMOTE="$(head -n1 <<< "$REMOTES" | sed 's/:$//')"
-RCLONE_REMOTE="$(ask_input "Remote utilisée pour les sauvegardes" "$DEFAULT_REMOTE")"
+RCLONE_REMOTE="$(ask_input "Remote utilisée pour les sauvegardes" "$DEFAULT_REMOTE" "RCLONE_REMOTE")"
 
 rclone listremotes --config "$RCLONE_CONFIG" | grep -qx "${RCLONE_REMOTE}:" || {
     log_error "Remote inconnue : $RCLONE_REMOTE"

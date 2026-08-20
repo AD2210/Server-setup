@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 log_step "Configuration de la fréquence de redémarrage"
 
-REBOOT_SCHEDULE="$(ask_input "Planification hebdomadaire (OnCalendar)" "Sun *-*-* 05:00:00")"
+REBOOT_SCHEDULE="$(ask_input "Planification hebdomadaire (OnCalendar)" "Sun *-*-* 05:00:00" "REBOOT_SCHEDULE")"
 
 [ -n "$REBOOT_SCHEDULE" ] || {
     log_error "Planification vide."

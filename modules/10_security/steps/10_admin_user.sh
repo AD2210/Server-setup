@@ -83,7 +83,7 @@ fi
 
 log_info "Utilisateur initial détecté : $INITIAL_USER"
 
-ADMIN_USER=$(ask_input "Nom de l'utilisateur administrateur" "admin")
+ADMIN_USER=$(ask_input "Nom de l'utilisateur administrateur" "admin" "ADMIN_USER")
 
 if [ -z "$ADMIN_USER" ] || ! [[ "$ADMIN_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
     log_error "Nom d'utilisateur invalide : $ADMIN_USER"

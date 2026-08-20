@@ -71,7 +71,7 @@ CURRENT_SSH_PORT="${CURRENT_SSH_PORT:-22}"
 
 log_info "Port SSH actuel : $CURRENT_SSH_PORT"
 
-SSH_PORT=$(ask_input "Entre le nouveau port SSH" "$CURRENT_SSH_PORT")
+SSH_PORT=$(ask_input "Entre le nouveau port SSH" "$CURRENT_SSH_PORT" "SSH_PORT")
 
 if [ -z "$SSH_PORT" ] \
     || ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] \
