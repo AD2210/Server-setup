@@ -126,6 +126,45 @@ run_caddy_validate() {
     fi
 }
 
+run_setup_help_check() {
+    local help command
+    local commands=(
+        all install system security security-deluser docker reverse-proxy proxy
+        backup restore logrotate logs updates update reboot monitoring healthcheck
+        finalize check
+    )
+
+    help="$(bash "$PROJECT_DIR/bin/setup" --help)"
+
+    for command in "${commands[@]}"; do
+        if grep -Eq "(^|[[:space:],])${command}(,|[[:space:]])" <<< "$help"; then
+            continue
+        fi
+
+        log_error "Commande absente de setup --help : $command"
+    done
+
+    if [ "$FAILED" = false ]; then
+        log_ok "Inventaire setup --help"
+    fi
+}
+
+run_script_permissions_check() {
+    local file
+
+    while IFS= read -r file; do
+        if [ -x "$file" ]; then
+            continue
+        fi
+
+        log_error "Script non exécutable : ${file#"$PROJECT_DIR/"}"
+    done < <(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort)
+
+    if [ "$FAILED" = false ]; then
+        log_ok "Permissions des scripts"
+    fi
+}
+
 run_bash_syntax
 run_shellcheck
 run_shfmt
@@ -133,6 +172,8 @@ run_markdownlint
 run_tomllint
 run_yaml_lint
 run_caddy_validate
+run_setup_help_check
+run_script_permissions_check
 
 if $FAILED; then
     exit 1
