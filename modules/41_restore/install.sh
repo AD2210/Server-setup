@@ -12,7 +12,7 @@ source "$MODULE_DIR/steps/10_environment.sh"
 source "$MODULE_DIR/steps/20_action.sh"
 source "$MODULE_DIR/steps/30_release.sh"
 
-case "${RESTORE_ACTION:-}" in
+case "${ACTION:-}" in
     3) restore_release ;;
 esac
 
