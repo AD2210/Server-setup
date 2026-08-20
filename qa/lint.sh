@@ -17,6 +17,8 @@ QA_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$QA_DIR/.." && pwd)"
 ALLOW_MISSING_TOOLS="${QA_ALLOW_MISSING_TOOLS:-false}"
 FAILED=false
+ERRORS=()
+ERROR_DETAILS=()
 
 if ! command -v rg >/dev/null 2>&1; then
     printf '[QA][ERROR] Outil requis absent : ripgrep (rg)\n' >&2
@@ -25,7 +27,14 @@ fi
 
 log_ok() { printf '[QA][OK] %s\n' "$1"; }
 log_warn() { printf '[QA][WARN] %s\n' "$1" >&2; }
-log_error() { printf '[QA][ERROR] %s\n' "$1" >&2; FAILED=true; }
+log_error() {
+    ERRORS+=("$1")
+    FAILED=true
+}
+
+log_error_detail() {
+    ERROR_DETAILS+=("$1"$'\n'"$2")
+}
 
 require_tool() {
     local tool="$1"
@@ -56,31 +65,34 @@ run_bash_syntax() {
 }
 
 run_shellcheck() {
-    local file
+    local output
     require_tool shellcheck || return 0
 
     mapfile -t files < <(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort)
-    if shellcheck "${files[@]}"; then
+    if output=$(shellcheck "${files[@]}" 2>&1); then
         log_ok "ShellCheck"
     else
         log_error "ShellCheck"
+        log_error_detail "ShellCheck" "$output"
     fi
 }
 
 run_shfmt() {
+    local output
     require_tool shfmt || return 0
 
-    if shfmt -d -i 4 -ci \
-        $(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort); then
+    mapfile -t files < <(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort)
+    if output=$(shfmt -d -i 4 -ci "${files[@]}" 2>&1); then
         log_ok "shfmt"
     else
         log_error "shfmt : formatage requis"
+        log_error_detail "shfmt" "$output"
     fi
 }
 
 run_markdownlint() {
     local tool=""
-    local file
+    local output
 
     if command -v markdownlint >/dev/null 2>&1; then
         tool="markdownlint"
@@ -90,44 +102,53 @@ run_markdownlint() {
         require_tool markdownlint || return 0
     fi
 
-    if "$tool" $(rg --files "$PROJECT_DIR" -g '*.md' | sort); then
+    mapfile -t files < <(rg --files "$PROJECT_DIR" -g '*.md' | sort)
+    if output=$("$tool" "${files[@]}" 2>&1); then
         log_ok "Markdownlint"
     else
         log_error "Markdownlint"
+        log_error_detail "Markdownlint" "$output"
     fi
 }
 
 run_tomllint() {
-    local file
+    local output
 
     rg --files "$PROJECT_DIR" -g '*.toml*' >/dev/null 2>&1 || return 0
     require_tool taplo || return 0
 
-    if taplo fmt --check $(rg --files "$PROJECT_DIR" -g '*.toml*' | sort); then
+    mapfile -t files < <(rg --files "$PROJECT_DIR" -g '*.toml*' | sort)
+    if output=$(taplo fmt --check "${files[@]}" 2>&1); then
         log_ok "Taplo"
     else
         log_error "Taplo : formatage requis"
+        log_error_detail "Taplo" "$output"
     fi
 }
 
 run_yaml_lint() {
+    local output
     rg --hidden --files "$PROJECT_DIR" -g '!.git/**' -g '*.yml' -g '*.yaml' >/dev/null 2>&1 || return 0
     require_tool yamllint || return 0
 
-    if yamllint $(rg --hidden --files "$PROJECT_DIR" -g '!.git/**' -g '*.yml' -g '*.yaml' | sort); then
+    mapfile -t files < <(rg --hidden --files "$PROJECT_DIR" -g '!.git/**' -g '*.yml' -g '*.yaml' | sort)
+    if output=$(yamllint "${files[@]}" 2>&1); then
         log_ok "Yamllint"
     else
         log_error "Yamllint"
+        log_error_detail "Yamllint" "$output"
     fi
 }
 
 run_caddy_validate() {
+    local output
     require_tool caddy || return 0
 
-    if caddy validate --config "$PROJECT_DIR/config/Caddyfile.example" --adapter caddyfile; then
+    if output=$(caddy validate --config "$PROJECT_DIR/config/Caddyfile.example" --adapter caddyfile 2>&1); then
         log_ok "Validation Caddy"
     else
         log_error "Validation Caddy"
+        log_error_detail "Validation Caddy" "$output"
     fi
 }
 
@@ -142,7 +163,7 @@ run_setup_help_check() {
     help="$(bash "$PROJECT_DIR/bin/setup" --help)"
 
     for command in "${commands[@]}"; do
-        if grep -Eq "(^|[[:space:],])${command}(,|[[:space:]])" <<< "$help"; then
+        if grep -Eq "(^|[[:space:],])${command}(,|[[:space:]])" <<<"$help"; then
             continue
         fi
 
@@ -198,6 +219,15 @@ run_script_permissions_check
 run_module_header_check
 
 if $FAILED; then
+    printf '\n[QA][SUMMARY] Échecs détectés :\n' >&2
+    for error in "${ERRORS[@]}"; do
+        printf '[QA][ERROR] %s\n' "$error" >&2
+    done
+
+    for detail in "${ERROR_DETAILS[@]}"; do
+        printf '\n[QA][DETAIL]\n%s\n' "$detail" >&2
+    done
+
     exit 1
 fi
 
