@@ -23,6 +23,19 @@ run_quiet() {
     local error_message="$1"
     shift
 
+    # Why: une mise à jour automatique peut démarrer entre deux modules, même
+    # si le préflight initial avait trouvé APT disponible.
+    case "${1:-}" in
+        apt|apt-get|apt-cache|dpkg)
+            if declare -F wait_for_apt >/dev/null 2>&1; then
+                wait_for_apt \
+                    "$(config_get APT_WAIT_TIMEOUT 600)" \
+                    "$(config_get APT_WAIT_INTERVAL 5)" \
+                    || return 1
+            fi
+            ;;
+    esac
+
     local error_file
     error_file="$(mktemp)"
 
