@@ -146,6 +146,11 @@ require_project_structure "$PROJECT_DIR"
 
 init_config "$ARG_CONFIG" "$ARG_SECRETS"
 
+wait_for_apt \
+    "$(config_get APT_WAIT_TIMEOUT 600)" \
+    "$(config_get APT_WAIT_INTERVAL 5)" \
+    || exit 1
+
 if $NON_INTERACTIVE; then
     log_info "Mode non interactif activé."
 fi

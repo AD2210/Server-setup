@@ -185,6 +185,19 @@ sudo setup system
 
 Prépare le système de base.
 
+Avant d'exécuter un module, l'orchestrateur vérifie qu'APT et DPKG sont
+disponibles. Si une mise à jour automatique est déjà en cours sur un serveur
+neuf, le script attend sa fin au lieu d'échouer sur un verrou APT. Le délai est
+configurable dans `setup.conf` :
+
+```dotenv
+APT_WAIT_TIMEOUT="600"
+APT_WAIT_INTERVAL="5"
+```
+
+`APT_WAIT_TIMEOUT` est exprimé en secondes et provoque une erreur si le verrou
+reste occupé au-delà de cette durée.
+
 Le module assure notamment :
 
 * validation Ubuntu Server LTS ;
@@ -1083,4 +1096,3 @@ Les modules doivent rester :
 * indépendants des secrets applicatifs lorsque cela est possible.
 
 L'objectif est de pouvoir reconstruire rapidement un serveur Ubuntu LTS tout en conservant une configuration compréhensible et maintenable.
-

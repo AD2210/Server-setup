@@ -63,13 +63,45 @@ require_ubuntu_lts() {
 
 wait_for_apt() {
     local timeout="${1:-600}"
+    local interval="${2:-5}"
     local elapsed=0
-    local interval=5
+    local lock_file
+    local apt_busy=false
+
+    if ! [[ "$timeout" =~ ^[0-9]+$ ]] || [ "$timeout" -lt 1 ]; then
+        log_error "APT_WAIT_TIMEOUT doit être un entier supérieur à zéro : $timeout"
+        return 1
+    fi
+
+    if ! [[ "$interval" =~ ^[0-9]+$ ]] || [ "$interval" -lt 1 ]; then
+        log_error "APT_WAIT_INTERVAL doit être un entier supérieur à zéro : $interval"
+        return 1
+    fi
 
     log_step "Vérification de la disponibilité APT"
 
     while true; do
-        if ! pgrep -f 'apt|apt-get|dpkg|unattended-upgrade' >/dev/null 2>&1; then
+        apt_busy=false
+
+        # Why: le verrou est la source réelle du conflit, même si le processus
+        # APT n'est plus identifié sous le nom attendu.
+        for lock_file in \
+            /var/lib/dpkg/lock-frontend \
+            /var/lib/dpkg/lock \
+            /var/cache/apt/archives/lock; do
+            if [ -e "$lock_file" ] && command_exists fuser \
+                && fuser -s "$lock_file" 2>/dev/null; then
+                apt_busy=true
+                break
+            fi
+        done
+
+        if ! $apt_busy && ! {
+            pgrep -x apt >/dev/null 2>&1 ||
+            pgrep -x apt-get >/dev/null 2>&1 ||
+            pgrep -x dpkg >/dev/null 2>&1 ||
+            pgrep -f '(^|/)unattended-upgrade( |$)' >/dev/null 2>&1;
+        }; then
             log_info "APT est disponible."
             return 0
         fi
