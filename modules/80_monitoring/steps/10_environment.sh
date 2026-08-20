@@ -21,7 +21,9 @@ systemctl is-active --quiet caddy || {
 
 MONITORING_CONFIG_DIR="/etc/server-setup/monitoring"
 VECTOR_CONFIG_DIR="/etc/vector"
+# shellcheck disable=SC2034
 VECTOR_ENV_FILE="$MONITORING_CONFIG_DIR/vector.env"
+# shellcheck disable=SC2034
 VECTOR_CONFIG_FILE="$VECTOR_CONFIG_DIR/vector.toml"
 
 install -d -m 750 -o root -g root "$MONITORING_CONFIG_DIR"

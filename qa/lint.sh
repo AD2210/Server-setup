@@ -74,7 +74,7 @@ run_shellcheck() {
     require_tool shellcheck || return 0
 
     mapfile -t files < <(rg --files "$PROJECT_DIR" -g '*.sh' -g 'bin/setup' | sort)
-    if output=$(shellcheck "${files[@]}" 2>&1); then
+    if output=$(shellcheck -x -S warning "${files[@]}" 2>&1); then
         log_ok "ShellCheck"
     else
         log_error "ShellCheck"

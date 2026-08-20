@@ -132,13 +132,13 @@ EOF
                 exit 1
             }
 
-            echo "OVH_SERVICE_NAME="$OVH_SERVICE_NAME"" >>"$OVH_CONFIG"
+            printf 'OVH_SERVICE_NAME="%s"\n' "$OVH_SERVICE_NAME" >>"$OVH_CONFIG"
         fi
     fi
 
     install -m 700 -o root -g root "$PROVIDER_SOURCE" "$PROVIDER_RUNTIME_DIR/provider-snapshot.sh"
 
-    echo "PROVIDER_NAME="$PROVIDER_NAME"" >"$PROVIDER_CONFIG"
+    printf 'PROVIDER_NAME="%s"\n' "$PROVIDER_NAME" >"$PROVIDER_CONFIG"
     chmod 600 "$PROVIDER_CONFIG"
 fi
 

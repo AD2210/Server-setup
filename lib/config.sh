@@ -19,6 +19,7 @@
 
 CONFIG_FILE=""
 SECRETS_FILE=""
+# shellcheck disable=SC2034
 NON_INTERACTIVE=false
 
 ##

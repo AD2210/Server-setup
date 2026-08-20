@@ -88,6 +88,7 @@ else
             add_database_target || log_warn "Cible ignorée."
         done
 
+        # shellcheck disable=SC2034
         compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null || DB_BACKUP_ENABLED=false
     else
         log_info "Sauvegardes PostgreSQL désactivées."

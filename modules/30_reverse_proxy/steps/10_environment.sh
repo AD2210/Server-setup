@@ -39,7 +39,7 @@ fi
 
 install -d -m 755 -o root -g root "$CADDY_SNIPPETS_DIR" "$CADDY_APPS_DIR"
 
-if [ -e "$CADDYFILE" ] && [ ! -r "$CADDYFILE" -o ! -w "$CADDYFILE" ]; then
+if [ -e "$CADDYFILE" ] && { [ ! -r "$CADDYFILE" ] || [ ! -w "$CADDYFILE" ]; }; then
     log_error "Le Caddyfile n'est pas accessible en lecture/écriture."
     log_info "Fichier concerné : $CADDYFILE"
     exit 1

@@ -28,7 +28,7 @@ list_backups() {
     # inutile. En disaster recovery, les entrées distantes restent disponibles.
     if [ -d "$local_root" ]; then
         while IFS= read -r dir; do
-            id="${dir##*/$prefix-}"
+            id="${dir##*/"$prefix"-}"
             printf 'local:%s\n' "$id"
         done < <(find "$local_root" -mindepth 1 -maxdepth 1 -type d \
             -name "$prefix-*" -printf '%f\n' | sed "s/^$prefix-//" | sort -r |
@@ -147,8 +147,10 @@ restore_db() {
         return 1
     }
 
+    # shellcheck disable=SC1090
     source "$target_file"
 
+    # shellcheck disable=SC2153
     compose_file="$(basename "$COMPOSE_FILE")"
 
     log_warn "La restauration va interrompre les services applicatifs et remplacer entièrement la base '$target'."

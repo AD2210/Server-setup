@@ -2,6 +2,7 @@
 log_step "Vérification de l'environnement de restauration"
 
 BACKUP_CONFIG="/etc/server-setup/backup/backup.conf"
+# shellcheck disable=SC2034
 TARGETS_DIR="/etc/server-setup/backup/targets.d"
 RESTORE_ROOT="/var/lib/server-setup/restore"
 
@@ -10,6 +11,7 @@ RESTORE_ROOT="/var/lib/server-setup/restore"
     exit 1
 }
 
+# shellcheck disable=SC1090
 source "$BACKUP_CONFIG"
 install -d -m 700 -o root -g root "$RESTORE_ROOT"
 

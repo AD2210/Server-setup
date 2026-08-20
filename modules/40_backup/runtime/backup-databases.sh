@@ -12,6 +12,7 @@ chmod 700 "$WORK"
 
 for target in "$TARGETS"/*.conf; do
     [ -f "$target" ] || continue
+    # shellcheck disable=SC1090
     source "$target"
 
     (

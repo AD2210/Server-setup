@@ -5,6 +5,7 @@ FINAL_SETUP_OK=false
 FINAL_SETUP_LINK_OK=false
 
 if [ -n "${PROJECT_DIR:-}" ] && [ -d "$PROJECT_DIR" ]; then
+    # shellcheck disable=SC2034
     FINAL_SETUP_OK=true
 fi
 

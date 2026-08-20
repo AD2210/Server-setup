@@ -127,6 +127,7 @@ run_module() {
     }
 
     (
+        # shellcheck disable=SC1090
         source "$module_file"
     )
 }

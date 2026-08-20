@@ -11,7 +11,8 @@ provider_require_runtime() {
 
 provider_create_snapshot() {
     provider_require_runtime || return 1
-    local description="server-setup-$(date -u +%Y%m%dT%H%M%SZ)"
+    local description
+    description="server-setup-$(date -u +%Y%m%dT%H%M%SZ)"
 
     printf '[SNAPSHOT] Vérification du snapshot OVH existant.\n'
     if "$OVH_VENV/bin/python" "$OVH_CLIENT" --config "$OVH_CONFIG" snapshot-exists; then
