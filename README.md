@@ -10,6 +10,10 @@ sudo setup <module>
 
 Les scripts sont conçus pour être exécutés via l'orchestrateur `setup`, qui assure notamment les contrôles de privilèges, du système et de l'environnement avant l'exécution des modules.
 
+Références complémentaires : [documentation des modules](docs/modules/README.md),
+[mode unattended](docs/UNATTENDED.md), [QA et linters](docs/QA.md) et
+[installation depuis un serveur vierge](#3-préparation-minimale-du-vps).
+
 ---
 
 # 1. Prérequis
