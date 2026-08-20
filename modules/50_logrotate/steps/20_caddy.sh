@@ -5,7 +5,7 @@ CADDY_LOG_DIR="/var/log/caddy"
 CADDY_ROTATE="/etc/logrotate.d/server-setup-caddy"
 
 if [ -d "$CADDY_LOG_DIR" ]; then
-    cat > "$CADDY_ROTATE" <<'EOF'
+    cat >"$CADDY_ROTATE" <<'EOF'
 /var/log/caddy/*.log {
     daily
     rotate 14

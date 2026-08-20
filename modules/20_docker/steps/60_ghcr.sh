@@ -31,7 +31,10 @@ else
         GHCR_USERNAME="$(ask_input "Utilisateur GitHub / compte technique" "" "GHCR_USERNAME")"
     fi
 
-    [ -n "$GHCR_USERNAME" ] || { log_error "Utilisateur GHCR manquant."; exit 1; }
+    [ -n "$GHCR_USERNAME" ] || {
+        log_error "Utilisateur GHCR manquant."
+        exit 1
+    }
 
     GHCR_TOKEN=""
     if declare -F config_has >/dev/null 2>&1 && config_has "GHCR_TOKEN"; then
@@ -41,12 +44,18 @@ else
         echo ""
     fi
 
-    [ -n "$GHCR_TOKEN" ] || { log_error "Token GHCR manquant."; exit 1; }
+    [ -n "$GHCR_TOKEN" ] || {
+        log_error "Token GHCR manquant."
+        exit 1
+    }
 
     ADMIN_HOME="$(getent passwd "$ADMIN_USER" | cut -d: -f6)"
-    [ -d "$ADMIN_HOME" ] || { log_error "Home de '$ADMIN_USER' introuvable."; exit 1; }
+    [ -d "$ADMIN_HOME" ] || {
+        log_error "Home de '$ADMIN_USER' introuvable."
+        exit 1
+    }
 
-    if ! printf '%s' "$GHCR_TOKEN" | sudo -u "$ADMIN_USER" HOME="$ADMIN_HOME"         docker login "$GHCR_REGISTRY" -u "$GHCR_USERNAME" --password-stdin >/dev/null 2>&1; then
+    if ! printf '%s' "$GHCR_TOKEN" | sudo -u "$ADMIN_USER" HOME="$ADMIN_HOME" docker login "$GHCR_REGISTRY" -u "$GHCR_USERNAME" --password-stdin >/dev/null 2>&1; then
         unset GHCR_TOKEN
         log_error "Authentification GHCR impossible."
         exit 1

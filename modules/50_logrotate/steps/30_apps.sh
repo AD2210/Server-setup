@@ -10,7 +10,7 @@ if [ ! -d "$APPS_DIR" ]; then
 fi
 
 # Les logs Symfony standardisés sous var/log sont pris en charge.
-cat > "$APP_ROTATE" <<'EOF'
+cat >"$APP_ROTATE" <<'EOF'
 /srv/apps/*/var/log/*.log {
     daily
     rotate 14

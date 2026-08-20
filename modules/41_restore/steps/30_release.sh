@@ -5,13 +5,19 @@ restore_release() {
     local backups id dir staging apps app compose_file source_env temp_env
 
     backups="$(list_backups files)"
-    [ -n "$backups" ] || { log_error "Aucun snapshot fichier disponible."; return 1; }
+    [ -n "$backups" ] || {
+        log_error "Aucun snapshot fichier disponible."
+        return 1
+    }
 
     log_info "Snapshots disponibles pour la restauration de release :"
-    while IFS= read -r x; do log "  $x"; done <<< "$backups"
+    while IFS= read -r x; do log "  $x"; done <<<"$backups"
 
-    id="$(ask_input "Snapshot de release" "$(head -n1 <<< "$backups")" "RESTORE_RELEASE_BACKUP")"
-    grep -qxF "$id" <<< "$backups" || { log_error "Snapshot inconnu : $id"; return 1; }
+    id="$(ask_input "Snapshot de release" "$(head -n1 <<<"$backups")" "RESTORE_RELEASE_BACKUP")"
+    grep -qxF "$id" <<<"$backups" || {
+        log_error "Snapshot inconnu : $id"
+        return 1
+    }
 
     dir="$(download_complete_backup files "$id")" || return 1
     staging="$dir/release-staging"
@@ -24,16 +30,25 @@ restore_release() {
 
     apps="$(find "$staging/srv/apps" -mindepth 1 -maxdepth 1 -type d \
         -printf '%f\n' 2>/dev/null | sort)"
-    [ -n "$apps" ] || { log_error "Aucune application disponible."; return 1; }
+    [ -n "$apps" ] || {
+        log_error "Aucune application disponible."
+        return 1
+    }
 
     log_info "Applications disponibles :"
-    while IFS= read -r x; do log "  $x"; done <<< "$apps"
+    while IFS= read -r x; do log "  $x"; done <<<"$apps"
 
-    app="$(ask_input "Application" "$(head -n1 <<< "$apps")" "RESTORE_APP")"
-    grep -qxF "$app" <<< "$apps" || { log_error "Application inconnue : $app"; return 1; }
+    app="$(ask_input "Application" "$(head -n1 <<<"$apps")" "RESTORE_APP")"
+    grep -qxF "$app" <<<"$apps" || {
+        log_error "Application inconnue : $app"
+        return 1
+    }
 
     compose_file="$(ask_input "Fichier Compose" "compose.yaml" "RESTORE_COMPOSE_FILE")"
-    [ -f "/srv/apps/$app/$compose_file" ] || { log_error "Compose introuvable."; return 1; }
+    [ -f "/srv/apps/$app/$compose_file" ] || {
+        log_error "Compose introuvable."
+        return 1
+    }
 
     source_env="$staging/srv/apps/$app/.env.prod.local"
     [ -f "$source_env" ] || {
@@ -52,10 +67,14 @@ restore_release() {
     fi
 
     (
-      cd "/srv/apps/$app"
-      docker compose --env-file "$temp_env" -f "$compose_file" pull
-      docker compose --env-file "$temp_env" -f "$compose_file" up -d --remove-orphans
-    ) || { rm -f "$temp_env"; log_error "Échec du rechargement."; return 1; }
+        cd "/srv/apps/$app"
+        docker compose --env-file "$temp_env" -f "$compose_file" pull
+        docker compose --env-file "$temp_env" -f "$compose_file" up -d --remove-orphans
+    ) || {
+        rm -f "$temp_env"
+        log_error "Échec du rechargement."
+        return 1
+    }
 
     rm -f "$temp_env"
     log_info "Release du snapshot '$id' chargée pour '$app'."

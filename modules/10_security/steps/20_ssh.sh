@@ -26,7 +26,7 @@ update_sshd_config() {
             "s|^[#]?[[:space:]]*${key}[[:space:]].*|${key} ${value}|" \
             "$SSHD_CONFIG"
     else
-        printf '%s %s\n' "$key" "$value" >> "$SSHD_CONFIG"
+        printf '%s %s\n' "$key" "$value" >>"$SSHD_CONFIG"
     fi
 }
 
@@ -73,10 +73,10 @@ log_info "Port SSH actuel : $CURRENT_SSH_PORT"
 
 SSH_PORT=$(ask_input "Entre le nouveau port SSH" "$CURRENT_SSH_PORT" "SSH_PORT")
 
-if [ -z "$SSH_PORT" ] \
-    || ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] \
-    || [ "$SSH_PORT" -lt 1 ] \
-    || [ "$SSH_PORT" -gt 65535 ]; then
+if [ -z "$SSH_PORT" ] ||
+    ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]] ||
+    [ "$SSH_PORT" -lt 1 ] ||
+    [ "$SSH_PORT" -gt 65535 ]; then
     log_error "Port SSH invalide : $SSH_PORT"
     log_info "Le port doit être compris entre 1 et 65535."
     exit 1

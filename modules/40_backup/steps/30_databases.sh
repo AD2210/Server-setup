@@ -8,37 +8,49 @@ install -d -m 700 -o root -g root "$BACKUP_CONFIG_DIR" "$BACKUP_TARGETS_DIR"
 DB_BACKUP_ENABLED=false
 
 get_compose_files_for_app() {
-    find "$1" -maxdepth 2 -type f \(         -iname "compose*.yml" -o -iname "compose*.yaml" -o         -iname "docker-compose*.yml" -o -iname "docker-compose*.yaml"     \) 2>/dev/null | sort
+    find "$1" -maxdepth 2 -type f \( -iname "compose*.yml" -o -iname "compose*.yaml" -o -iname "docker-compose*.yml" -o -iname "docker-compose*.yaml" \) 2>/dev/null | sort
 }
 
 add_database_target() {
     local name app compose service db_name_env db_user_env db_password_env target_file detected
 
     name="$(ask_input "Nom unique de la cible DB" "app-db")"
-    [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || { log_error "Nom de cible invalide : $name"; return 1; }
+    [[ "$name" =~ ^[a-zA-Z0-9._-]+$ ]] || {
+        log_error "Nom de cible invalide : $name"
+        return 1
+    }
 
     target_file="$BACKUP_TARGETS_DIR/$name.conf"
-    [ ! -e "$target_file" ] || { log_error "La cible '$name' existe déjà."; return 1; }
+    [ ! -e "$target_file" ] || {
+        log_error "La cible '$name' existe déjà."
+        return 1
+    }
 
     app="$(ask_input "Répertoire de l'application" "/srv/apps/app1")"
-    [ -d "$app" ] || { log_error "Répertoire introuvable : $app"; return 1; }
+    [ -d "$app" ] || {
+        log_error "Répertoire introuvable : $app"
+        return 1
+    }
 
     detected="$(get_compose_files_for_app "$app")"
     if [ -n "$detected" ]; then
         log_info "Fichiers Compose détectés :"
-        while IFS= read -r line; do log "  $line"; done <<< "$detected"
+        while IFS= read -r line; do log "  $line"; done <<<"$detected"
     fi
 
     compose="$(ask_input "Fichier Compose" "compose.yaml")"
     [[ "$compose" = /* ]] || compose="$app/$compose"
-    [ -f "$compose" ] || { log_error "Compose introuvable : $compose"; return 1; }
+    [ -f "$compose" ] || {
+        log_error "Compose introuvable : $compose"
+        return 1
+    }
 
     service="$(ask_input "Service PostgreSQL" "database")"
     db_name_env="$(ask_input "Variable nom DB" "POSTGRES_DB")"
     db_user_env="$(ask_input "Variable utilisateur DB" "POSTGRES_USER")"
     db_password_env="$(ask_input "Variable mot de passe DB" "POSTGRES_PASSWORD")"
 
-    cat > "$target_file" <<EOF
+    cat >"$target_file" <<EOF
 TARGET_NAME="$name"
 APP_DIR="$app"
 COMPOSE_FILE="$compose"

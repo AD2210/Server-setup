@@ -28,18 +28,18 @@ if [ ! -e "$VECTOR_ENV_FILE" ]; then
         "$VECTOR_ENV_TMP"
 
     printf 'VECTOR_INSTANCE="%s"\n' \
-        "$(config_get MONITORING_INSTANCE "$(hostname -s)")" >> "$VECTOR_ENV_TMP"
+        "$(config_get MONITORING_INSTANCE "$(hostname -s)")" >>"$VECTOR_ENV_TMP"
 
     if config_has MONITORING_CLIENT_ID; then
-        printf 'VECTOR_CLIENT_ID="%s"\n' "$(config_get MONITORING_CLIENT_ID)" >> "$VECTOR_ENV_TMP"
+        printf 'VECTOR_CLIENT_ID="%s"\n' "$(config_get MONITORING_CLIENT_ID)" >>"$VECTOR_ENV_TMP"
     else
-        printf 'VECTOR_CLIENT_ID="CHANGE_ME"\n' >> "$VECTOR_ENV_TMP"
+        printf 'VECTOR_CLIENT_ID="CHANGE_ME"\n' >>"$VECTOR_ENV_TMP"
     fi
 
     if config_has MONITORING_CLIENT_SECRET; then
-        printf 'VECTOR_CLIENT_SECRET="%s"\n' "$(config_get MONITORING_CLIENT_SECRET)" >> "$VECTOR_ENV_TMP"
+        printf 'VECTOR_CLIENT_SECRET="%s"\n' "$(config_get MONITORING_CLIENT_SECRET)" >>"$VECTOR_ENV_TMP"
     else
-        printf 'VECTOR_CLIENT_SECRET="CHANGE_ME"\n' >> "$VECTOR_ENV_TMP"
+        printf 'VECTOR_CLIENT_SECRET="CHANGE_ME"\n' >>"$VECTOR_ENV_TMP"
     fi
 
     install -m 600 -o root -g root "$VECTOR_ENV_TMP" "$VECTOR_ENV_FILE"
@@ -62,7 +62,7 @@ fi
 
 VECTOR_SYSTEMD_DROPIN_DIR="/etc/systemd/system/vector.service.d"
 install -d -m 755 -o root -g root "$VECTOR_SYSTEMD_DROPIN_DIR"
-cat > "$VECTOR_SYSTEMD_DROPIN_DIR/server-setup.conf" <<EOF
+cat >"$VECTOR_SYSTEMD_DROPIN_DIR/server-setup.conf" <<EOF
 [Service]
 EnvironmentFile=$VECTOR_ENV_FILE
 EOF

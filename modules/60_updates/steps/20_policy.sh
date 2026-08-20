@@ -3,7 +3,7 @@ log_step "Configuration de la politique de mises à jour"
 
 POLICY="/etc/apt/apt.conf.d/52server-setup-unattended-upgrades"
 
-cat > "$POLICY" <<'EOF'
+cat >"$POLICY" <<'EOF'
 Unattended-Upgrade::Allowed-Origins {
     "${distro_id}:${distro_codename}-security";
 };
@@ -18,7 +18,7 @@ EOF
 
 chmod 644 "$POLICY"
 
-cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 EOF

@@ -89,8 +89,8 @@ wait_for_apt() {
             /var/lib/dpkg/lock-frontend \
             /var/lib/dpkg/lock \
             /var/cache/apt/archives/lock; do
-            if [ -e "$lock_file" ] && command_exists fuser \
-                && fuser -s "$lock_file" 2>/dev/null; then
+            if [ -e "$lock_file" ] && command_exists fuser &&
+                fuser -s "$lock_file" 2>/dev/null; then
                 apt_busy=true
                 break
             fi
@@ -98,9 +98,9 @@ wait_for_apt() {
 
         if ! $apt_busy && ! {
             pgrep -x apt >/dev/null 2>&1 ||
-            pgrep -x apt-get >/dev/null 2>&1 ||
-            pgrep -x dpkg >/dev/null 2>&1 ||
-            pgrep -f '(^|/)unattended-upgrade( |$)' >/dev/null 2>&1;
+                pgrep -x apt-get >/dev/null 2>&1 ||
+                pgrep -x dpkg >/dev/null 2>&1 ||
+                pgrep -f '(^|/)unattended-upgrade( |$)' >/dev/null 2>&1
         }; then
             log_info "APT est disponible."
             return 0

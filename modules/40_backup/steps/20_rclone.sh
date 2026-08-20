@@ -14,7 +14,7 @@ if [ -n "$REMOTES" ]; then
     log_info "Remotes rclone existantes :"
     while IFS= read -r remote; do
         [ -n "$remote" ] && log "  ${remote%:}"
-    done <<< "$REMOTES"
+    done <<<"$REMOTES"
 
     KEEP_RCLONE_CONFIG=false
     if $NON_INTERACTIVE; then
@@ -48,9 +48,12 @@ else
     REMOTES="$(rclone listremotes --config "$RCLONE_CONFIG" 2>/dev/null || true)"
 fi
 
-[ -n "$REMOTES" ] || { log_error "Aucune remote rclone disponible."; exit 1; }
+[ -n "$REMOTES" ] || {
+    log_error "Aucune remote rclone disponible."
+    exit 1
+}
 
-DEFAULT_REMOTE="$(head -n1 <<< "$REMOTES" | sed 's/:$//')"
+DEFAULT_REMOTE="$(head -n1 <<<"$REMOTES" | sed 's/:$//')"
 RCLONE_REMOTE="$(ask_input "Remote utilisée pour les sauvegardes" "$DEFAULT_REMOTE" "RCLONE_REMOTE")"
 
 rclone listremotes --config "$RCLONE_CONFIG" | grep -qx "${RCLONE_REMOTE}:" || {
@@ -58,6 +61,6 @@ rclone listremotes --config "$RCLONE_CONFIG" | grep -qx "${RCLONE_REMOTE}:" || {
     exit 1
 }
 
-run_quiet "Impossible d'accéder à la remote '$RCLONE_REMOTE'."     rclone lsd "${RCLONE_REMOTE}:" --config "$RCLONE_CONFIG" || exit 1
+run_quiet "Impossible d'accéder à la remote '$RCLONE_REMOTE'." rclone lsd "${RCLONE_REMOTE}:" --config "$RCLONE_CONFIG" || exit 1
 
 log_info "Remote '$RCLONE_REMOTE' opérationnelle."

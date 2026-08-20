@@ -27,20 +27,20 @@ done
 
 if [ "${#PACKAGES_TO_REMOVE[@]}" -gt 0 ]; then
     log_warn "Paquets conflictuels détectés : ${PACKAGES_TO_REMOVE[*]}"
-    run_quiet "Impossible de supprimer les paquets Docker conflictuels."         apt-get remove -y "${PACKAGES_TO_REMOVE[@]}" || exit 1
+    run_quiet "Impossible de supprimer les paquets Docker conflictuels." apt-get remove -y "${PACKAGES_TO_REMOVE[@]}" || exit 1
 else
     log_info "Aucun paquet Docker conflictuel détecté."
 fi
 
 run_quiet "Impossible de mettre à jour les dépôts APT." apt-get update || exit 1
-run_quiet "Impossible d'installer les dépendances Docker."     apt-get install -y ca-certificates curl || exit 1
+run_quiet "Impossible d'installer les dépendances Docker." apt-get install -y ca-certificates curl || exit 1
 
 install -m 0755 -d /etc/apt/keyrings >/dev/null 2>&1 || {
     log_error "Impossible de créer /etc/apt/keyrings."
     exit 1
 }
 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg     -o "$DOCKER_KEYRING" >/dev/null 2>&1 || {
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$DOCKER_KEYRING" >/dev/null 2>&1 || {
     log_error "Impossible de télécharger la clé GPG officielle Docker."
     log_info "Vérifiez l'accès à download.docker.com."
     exit 1
@@ -48,7 +48,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg     -o "$DOCKER_KEYRING"
 
 chmod a+r "$DOCKER_KEYRING"
 
-cat > "$DOCKER_SOURCE" <<EOF
+cat >"$DOCKER_SOURCE" <<EOF
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
 Suites: $UBUNTU_CODENAME
@@ -57,6 +57,6 @@ Architectures: $ARCH
 Signed-By: $DOCKER_KEYRING
 EOF
 
-run_quiet "Impossible de mettre à jour APT après ajout du dépôt Docker."     apt-get update || exit 1
+run_quiet "Impossible de mettre à jour APT après ajout du dépôt Docker." apt-get update || exit 1
 
 log_info "Dépôt officiel Docker configuré."

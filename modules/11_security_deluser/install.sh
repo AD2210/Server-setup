@@ -12,7 +12,6 @@ set -euo pipefail
 
 log_module "Suppression de l'utilisateur initial"
 
-
 # ----------------------------------------------------------------------------
 # Détection de l'utilisateur courant
 # ----------------------------------------------------------------------------
@@ -28,7 +27,6 @@ if [ "$CURRENT_USER" = "root" ]; then
 fi
 
 log_info "Session administrateur détectée : $CURRENT_USER"
-
 
 # ----------------------------------------------------------------------------
 # Saisie de l'utilisateur à supprimer
@@ -56,7 +54,6 @@ if ! id "$TARGET_USER" >/dev/null 2>&1; then
     exit 0
 fi
 
-
 # ----------------------------------------------------------------------------
 # Vérification des processus actifs
 # ----------------------------------------------------------------------------
@@ -72,7 +69,6 @@ if [ -n "$USER_PROCESSES" ]; then
     exit 1
 fi
 
-
 # ----------------------------------------------------------------------------
 # Confirmation
 # ----------------------------------------------------------------------------
@@ -84,7 +80,6 @@ if ! confirm "Supprimer définitivement '$TARGET_USER' ?" "DELETE_INITIAL_USER";
     exit 0
 fi
 
-
 # ----------------------------------------------------------------------------
 # Suppression
 # ----------------------------------------------------------------------------
@@ -95,7 +90,6 @@ if ! userdel -r "$TARGET_USER"; then
     log_error "Impossible de supprimer l'utilisateur '$TARGET_USER'."
     exit 1
 fi
-
 
 # ----------------------------------------------------------------------------
 # Vérification finale

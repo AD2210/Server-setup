@@ -64,7 +64,7 @@ configure_passwordless_sudo() {
     local user="$1"
     local sudo_file="$SUDOERS_DIR/server-admin"
 
-    printf '%s ALL=(ALL:ALL) NOPASSWD: ALL\n' "$user" > "$sudo_file"
+    printf '%s ALL=(ALL:ALL) NOPASSWD: ALL\n' "$user" >"$sudo_file"
     chmod 440 "$sudo_file"
 
     if ! visudo -cf "$sudo_file" >/dev/null 2>&1; then

@@ -11,7 +11,7 @@ fi
 if id -nG "$ADMIN_USER" | tr ' ' '\n' | grep -qx docker; then
     log_info "L'utilisateur '$ADMIN_USER' appartient déjà au groupe docker."
 else
-    run_quiet "Impossible d'ajouter '$ADMIN_USER' au groupe docker."         usermod -aG docker "$ADMIN_USER" || exit 1
+    run_quiet "Impossible d'ajouter '$ADMIN_USER' au groupe docker." usermod -aG docker "$ADMIN_USER" || exit 1
     USER_GROUP_UPDATED=true
     log_info "Utilisateur '$ADMIN_USER' ajouté au groupe docker."
 fi

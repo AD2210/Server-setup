@@ -6,8 +6,14 @@
 
 log_step "Vérification de l'environnement monitoring"
 
-command_exists curl || { log_error "curl est requis pour installer le monitoring."; exit 1; }
-command_exists caddy || { log_error "Caddy doit être installé avant le monitoring."; exit 1; }
+command_exists curl || {
+    log_error "curl est requis pour installer le monitoring."
+    exit 1
+}
+command_exists caddy || {
+    log_error "Caddy doit être installé avant le monitoring."
+    exit 1
+}
 systemctl is-active --quiet caddy || {
     log_error "Le service Caddy doit être actif avant l'installation d'Ember."
     exit 1

@@ -21,7 +21,6 @@ CONFIG_FILE=""
 SECRETS_FILE=""
 NON_INTERACTIVE=false
 
-
 ##
 # Vérifie qu'un fichier de configuration ne contient que des affectations
 # simples, commentaires ou lignes vides.
@@ -38,8 +37,8 @@ validate_config_file() {
     invalid_lines="$(
         grep -nEv \
             '^[[:space:]]*($|#.*|[A-Za-z_][A-Za-z0-9_]*="([^"\\]|\\.)*"|[A-Za-z_][A-Za-z0-9_]*=[A-Za-z0-9._:/,@+%=-]+)[[:space:]]*$' \
-            "$file" \
-            || true
+            "$file" ||
+            true
     )"
 
     if [ -n "$invalid_lines" ]; then
@@ -49,7 +48,6 @@ validate_config_file() {
         return 1
     fi
 }
-
 
 ##
 # Charge un fichier de configuration validé.
@@ -62,7 +60,6 @@ load_config_file() {
     # shellcheck disable=SC1090
     source "$file"
 }
-
 
 ##
 # Initialisation globale de la configuration.
@@ -100,7 +97,6 @@ init_config() {
     fi
 }
 
-
 ##
 # Retourne la valeur d'une variable par son nom.
 ##
@@ -114,7 +110,6 @@ config_get() {
         printf '%s\n' "$default"
     fi
 }
-
 
 ##
 # Indique si une clé possède une valeur.

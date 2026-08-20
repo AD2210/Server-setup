@@ -16,7 +16,10 @@ list_backups() {
     case "$category" in
         databases) prefix="db" ;;
         files) prefix="files" ;;
-        *) log_error "Catégorie de backup inconnue : $category"; return 1 ;;
+        *)
+            log_error "Catégorie de backup inconnue : $category"
+            return 1
+            ;;
     esac
 
     local_root="${LOCAL_BACKUP_ROOT:-/var/backups/server-setup}"
@@ -28,13 +31,13 @@ list_backups() {
             id="${dir##*/$prefix-}"
             printf 'local:%s\n' "$id"
         done < <(find "$local_root" -mindepth 1 -maxdepth 1 -type d \
-            -name "$prefix-*" -printf '%f\n' | sed "s/^$prefix-//" | sort -r \
-            | sed "s#^#$local_root/$prefix-#")
+            -name "$prefix-*" -printf '%f\n' | sed "s/^$prefix-//" | sort -r |
+            sed "s#^#$local_root/$prefix-#")
     fi
 
     rclone lsf "${RCLONE_REMOTE}:${REMOTE_ROOT}/${category}" \
-        --config "$RCLONE_CONFIG" --dirs-only 2>/dev/null \
-        | sed 's:/$::' | sort -r | sed 's/^/remote:/' || true
+        --config "$RCLONE_CONFIG" --dirs-only 2>/dev/null |
+        sed 's:/$::' | sort -r | sed 's/^/remote:/' || true
 }
 
 download_complete_backup() {
@@ -47,7 +50,10 @@ download_complete_backup() {
     case "$category" in
         databases) prefix="db" ;;
         files) prefix="files" ;;
-        *) log_error "Catégorie de backup inconnue : $category"; return 1 ;;
+        *)
+            log_error "Catégorie de backup inconnue : $category"
+            return 1
+            ;;
     esac
 
     [[ "$id" =~ ^[0-9TZ._-]+$ ]] || {
@@ -59,7 +65,10 @@ download_complete_backup() {
 
     if [ "$source" = "local" ]; then
         local_source="${LOCAL_BACKUP_ROOT:-/var/backups/server-setup}/$prefix-$id"
-        [ -d "$local_source" ] || { log_error "Backup local introuvable : $local_source"; return 1; }
+        [ -d "$local_source" ] || {
+            log_error "Backup local introuvable : $local_source"
+            return 1
+        }
     elif [ "$source" = "remote" ]; then
         remote="${RCLONE_REMOTE}:${REMOTE_ROOT}/${category}/${id}"
     else
@@ -70,8 +79,8 @@ download_complete_backup() {
     if [ "$source" = "local" ]; then
         [ -f "$local_source/COMPLETE" ]
     else
-        rclone lsf "$remote" --config "$RCLONE_CONFIG" --files-only \
-            | grep -qx COMPLETE
+        rclone lsf "$remote" --config "$RCLONE_CONFIG" --files-only |
+            grep -qx COMPLETE
     fi || {
         log_error "Sauvegarde incomplète : $id"
         return 1
@@ -104,13 +113,19 @@ restore_db() {
     local -a running_services=() application_services=()
 
     backups="$(list_backups databases)"
-    [ -n "$backups" ] || { log_error "Aucun backup DB."; return 1; }
+    [ -n "$backups" ] || {
+        log_error "Aucun backup DB."
+        return 1
+    }
 
     log_info "Backups DB :"
-    while IFS= read -r x; do log "  $x"; done <<< "$backups"
+    while IFS= read -r x; do log "  $x"; done <<<"$backups"
 
-    id="$(ask_input "Backup DB" "$(head -n1 <<< "$backups")" "RESTORE_DB_BACKUP")"
-    grep -qxF "$id" <<< "$backups" || { log_error "Backup inconnu."; return 1; }
+    id="$(ask_input "Backup DB" "$(head -n1 <<<"$backups")" "RESTORE_DB_BACKUP")"
+    grep -qxF "$id" <<<"$backups" || {
+        log_error "Backup inconnu."
+        return 1
+    }
 
     dir="$(download_complete_backup databases "$id")" || return 1
 
@@ -121,9 +136,9 @@ restore_db() {
 
     targets="$(for f in "$TARGETS_DIR"/*.conf; do basename "$f" .conf; done)"
     log_info "Cibles :"
-    while IFS= read -r x; do log "  $x"; done <<< "$targets"
+    while IFS= read -r x; do log "  $x"; done <<<"$targets"
 
-    target="$(ask_input "Cible DB" "$(head -n1 <<< "$targets")" "RESTORE_DB_TARGET")"
+    target="$(ask_input "Cible DB" "$(head -n1 <<<"$targets")" "RESTORE_DB_TARGET")"
     target_file="$TARGETS_DIR/$target.conf"
     dump="$dir/$target.dump"
 
@@ -148,7 +163,7 @@ restore_db() {
         return 1
     fi
 
-    mapfile -t running_services <<< "$services_output"
+    mapfile -t running_services <<<"$services_output"
     for service in "${running_services[@]}"; do
         [ -n "$service" ] && [ "$service" != "$DB_SERVICE" ] && application_services+=("$service")
     done
@@ -190,7 +205,7 @@ restore_db() {
 
                 pg_restore --no-owner --no-privileges \
                     -U "$DB_USER" -d "$DB_NAME"
-            ' < "$dump"
+            ' <"$dump"
     ); then
         log_error "Échec de la suppression, recréation ou restauration de la base."
         docker compose -f "$compose_file" up -d --remove-orphans >/dev/null 2>&1 || true
@@ -238,13 +253,19 @@ restore_files() {
     local backups id dir staging
 
     backups="$(list_backups files)"
-    [ -n "$backups" ] || { log_error "Aucun snapshot logique."; return 1; }
+    [ -n "$backups" ] || {
+        log_error "Aucun snapshot logique."
+        return 1
+    }
 
     log_info "Snapshots fichiers :"
-    while IFS= read -r x; do log "  $x"; done <<< "$backups"
+    while IFS= read -r x; do log "  $x"; done <<<"$backups"
 
-    id="$(ask_input "Snapshot fichiers" "$(head -n1 <<< "$backups")" "RESTORE_FILES_BACKUP")"
-    grep -qxF "$id" <<< "$backups" || { log_error "Snapshot inconnu."; return 1; }
+    id="$(ask_input "Snapshot fichiers" "$(head -n1 <<<"$backups")" "RESTORE_FILES_BACKUP")"
+    grep -qxF "$id" <<<"$backups" || {
+        log_error "Snapshot inconnu."
+        return 1
+    }
 
     dir="$(download_complete_backup files "$id")" || return 1
     staging="$dir/staging"
@@ -272,5 +293,8 @@ case "$ACTION" in
     2) restore_files ;;
     3) ;;
     4) show_dr ;;
-    *) log_error "Choix invalide : $ACTION"; exit 1 ;;
+    *)
+        log_error "Choix invalide : $ACTION"
+        exit 1
+        ;;
 esac

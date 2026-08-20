@@ -21,7 +21,6 @@
 
 set -euo pipefail
 
-
 # ----------------------------------------------------------------------------
 # Configuration du module
 # ----------------------------------------------------------------------------
@@ -33,13 +32,11 @@ REQUIRED_PACKAGES=(
     caddy
 )
 
-
 # ----------------------------------------------------------------------------
 # Initialisation
 # ----------------------------------------------------------------------------
 
 log_module "Mise à jour et préparation du système"
-
 
 # ----------------------------------------------------------------------------
 # Mise à jour des dépôts
@@ -49,9 +46,8 @@ log_step "Mise à jour des dépôts APT"
 
 run_quiet \
     "Impossible de mettre à jour les dépôts APT." \
-    apt-get update \
-    || exit 1
-
+    apt-get update ||
+    exit 1
 
 # ----------------------------------------------------------------------------
 # Mise à jour du système
@@ -61,9 +57,8 @@ log_step "Installation des mises à jour système"
 
 run_quiet \
     "Impossible d'appliquer les mises à jour système." \
-    apt-get upgrade -y \
-    || exit 1
-
+    apt-get upgrade -y ||
+    exit 1
 
 # ----------------------------------------------------------------------------
 # Installation des dépendances
@@ -73,9 +68,8 @@ log_step "Installation des dépendances système"
 
 run_quiet \
     "Impossible d'installer les dépendances système." \
-    apt-get install -y "${REQUIRED_PACKAGES[@]}" \
-    || exit 1
-
+    apt-get install -y "${REQUIRED_PACKAGES[@]}" ||
+    exit 1
 
 # ----------------------------------------------------------------------------
 # Nettoyage APT
@@ -85,14 +79,13 @@ log_step "Nettoyage du système"
 
 run_quiet \
     "Impossible de supprimer les paquets devenus inutiles." \
-    apt-get autoremove -y \
-    || exit 1
+    apt-get autoremove -y ||
+    exit 1
 
 run_quiet \
     "Impossible de nettoyer le cache APT." \
-    apt-get autoclean \
-    || exit 1
-
+    apt-get autoclean ||
+    exit 1
 
 # ----------------------------------------------------------------------------
 # Vérifications finales
@@ -116,7 +109,6 @@ if [ "$INSTALLATION_OK" != true ]; then
     log_info "Consultez les erreurs ci-dessus avant de poursuivre."
     exit 1
 fi
-
 
 # ----------------------------------------------------------------------------
 # Fin du module

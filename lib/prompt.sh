@@ -16,7 +16,6 @@
 ## - une valeur absente sans défaut provoque une erreur.
 ## ============================================================================
 
-
 ##
 # Convertit une valeur de configuration en booléen.
 ##
@@ -24,10 +23,10 @@ parse_boolean() {
     local value="${1,,}"
 
     case "$value" in
-        1|true|yes|y|on)
+        1 | true | yes | y | on)
             return 0
             ;;
-        0|false|no|n|off)
+        0 | false | no | n | off)
             return 1
             ;;
         *)
@@ -35,7 +34,6 @@ parse_boolean() {
             ;;
     esac
 }
-
 
 ##
 # Demande une valeur texte.
@@ -69,7 +67,6 @@ ask_input() {
     read -r -p "$prompt [$default]: " value
     printf '%s\n' "${value:-$default}"
 }
-
 
 ##
 # Confirmation Y/N.
@@ -112,7 +109,7 @@ confirm() {
     read -r -p "$prompt (y/N): " choice
 
     case "$choice" in
-        y|Y)
+        y | Y)
             return 0
             ;;
         *)
@@ -120,7 +117,6 @@ confirm() {
             ;;
     esac
 }
-
 
 ##
 # Confirmation stricte, sans valeur par défaut implicite en unattended.

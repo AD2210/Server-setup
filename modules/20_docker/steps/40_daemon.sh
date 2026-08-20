@@ -15,7 +15,7 @@ if [ -f "$DOCKER_DAEMON_FILE" ]; then
     log_info "Sauvegarde créée : $BACKUP_FILE"
 fi
 
-cat > "$DOCKER_DAEMON_FILE" <<'EOF'
+cat >"$DOCKER_DAEMON_FILE" <<'EOF'
 {
   "live-restore": true,
   "log-driver": "json-file",
@@ -39,16 +39,16 @@ python3 -m json.tool "$DOCKER_DAEMON_FILE" >/dev/null 2>&1 || {
 
 log_info "Configuration daemon.json valide."
 
-run_quiet "Impossible d'activer docker.service."     systemctl enable docker.service || exit 1
+run_quiet "Impossible d'activer docker.service." systemctl enable docker.service || exit 1
 
-run_quiet "Impossible d'activer containerd.service."     systemctl enable containerd.service || exit 1
+run_quiet "Impossible d'activer containerd.service." systemctl enable containerd.service || exit 1
 
 if systemctl is-active --quiet docker; then
-    if ! run_quiet "Le rechargement du daemon Docker a échoué."         systemctl reload docker; then
+    if ! run_quiet "Le rechargement du daemon Docker a échoué." systemctl reload docker; then
 
         log_warn "Tentative de redémarrage complet du daemon Docker."
 
-        if ! run_quiet "Impossible de redémarrer Docker."             systemctl restart docker; then
+        if ! run_quiet "Impossible de redémarrer Docker." systemctl restart docker; then
 
             if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
                 log_warn "Rollback de la configuration Docker."
@@ -59,7 +59,7 @@ if systemctl is-active --quiet docker; then
         fi
     fi
 else
-    run_quiet "Impossible de démarrer Docker."         systemctl start docker || exit 1
+    run_quiet "Impossible de démarrer Docker." systemctl start docker || exit 1
 fi
 
 log_info "Daemon Docker configuré et actif."

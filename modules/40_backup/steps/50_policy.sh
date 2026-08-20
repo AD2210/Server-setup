@@ -13,7 +13,10 @@ LOCAL_RETENTION_DAYS="$(ask_input "Rétention locale en jours" "3" "LOCAL_RETENT
 REMOTE_RETENTION_DAYS="$(ask_input "Rétention distante en jours" "30" "REMOTE_RETENTION_DAYS")"
 
 for value in "$LOCAL_RETENTION_DAYS" "$REMOTE_RETENTION_DAYS"; do
-    [[ "$value" =~ ^[0-9]+$ ]] && [ "$value" -ge 1 ] || { log_error "Rétention invalide : $value"; exit 1; }
+    [[ "$value" =~ ^[0-9]+$ ]] && [ "$value" -ge 1 ] || {
+        log_error "Rétention invalide : $value"
+        exit 1
+    }
 done
 
 DB_SCHEDULE=""
@@ -24,7 +27,7 @@ $DB_BACKUP_ENABLED && DB_SCHEDULE="$(ask_input "Fréquence des dumps PostgreSQL 
 $FILES_BACKUP_ENABLED && FILES_SCHEDULE="$(ask_input "Fréquence du snapshot logique (OnCalendar)" "*-*-* 03:00:00" "FILES_SCHEDULE")"
 $PROVIDER_BACKUP_ENABLED && PROVIDER_SCHEDULE="$(ask_input "Fréquence du snapshot provider (OnCalendar)" "Sun *-*-* 04:00:00" "PROVIDER_SCHEDULE")"
 
-cat > "$BACKUP_CONFIG" <<EOF
+cat >"$BACKUP_CONFIG" <<EOF
 RCLONE_CONFIG="$RCLONE_CONFIG"
 RCLONE_REMOTE="$RCLONE_REMOTE"
 REMOTE_ROOT="$REMOTE_ROOT"
@@ -43,7 +46,7 @@ EOF
 chmod 600 "$BACKUP_CONFIG"
 
 if $FILES_BACKUP_ENABLED; then
-    cat > "$BACKUP_EXCLUDES" <<'EOF'
+    cat >"$BACKUP_EXCLUDES" <<'EOF'
 */.git/*
 */node_modules/*
 */vendor/*

@@ -7,7 +7,6 @@
 
 set -euo pipefail
 
-
 # ----------------------------------------------------------------------------
 # Résolution du chemin réel du projet
 # ----------------------------------------------------------------------------
@@ -22,7 +21,6 @@ done
 
 PROJECT_DIR="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 
-
 # ----------------------------------------------------------------------------
 # Librairies
 # ----------------------------------------------------------------------------
@@ -32,7 +30,6 @@ source "$PROJECT_DIR/lib/config.sh"
 source "$PROJECT_DIR/lib/prompt.sh"
 source "$PROJECT_DIR/lib/utils.sh"
 source "$PROJECT_DIR/lib/system.sh"
-
 
 # ----------------------------------------------------------------------------
 # Arguments
@@ -77,12 +74,18 @@ usage() {
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --config)
-            [ "$#" -ge 2 ] || { log_error "--config nécessite un fichier."; exit 1; }
+            [ "$#" -ge 2 ] || {
+                log_error "--config nécessite un fichier."
+                exit 1
+            }
             ARG_CONFIG="$2"
             shift 2
             ;;
         --secrets)
-            [ "$#" -ge 2 ] || { log_error "--secrets nécessite un fichier."; exit 1; }
+            [ "$#" -ge 2 ] || {
+                log_error "--secrets nécessite un fichier."
+                exit 1
+            }
             ARG_SECRETS="$2"
             shift 2
             ;;
@@ -90,7 +93,7 @@ while [ "$#" -gt 0 ]; do
             NON_INTERACTIVE=true
             shift
             ;;
-        -h|--help)
+        -h | --help)
             usage
             exit 0
             ;;
@@ -109,7 +112,6 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
-
 
 # ----------------------------------------------------------------------------
 # Exécution des modules
@@ -139,7 +141,7 @@ run_all_modules() {
         module_name="$(basename "$module_dir")"
 
         case "$module_name" in
-            11_security_deluser|41_restore)
+            11_security_deluser | 41_restore)
                 continue
                 ;;
         esac
@@ -147,7 +149,6 @@ run_all_modules() {
         run_module "$module_name"
     done
 }
-
 
 # ----------------------------------------------------------------------------
 # Préflight
@@ -163,20 +164,19 @@ init_config "$ARG_CONFIG" "$ARG_SECRETS"
 
 wait_for_apt \
     "$(config_get APT_WAIT_TIMEOUT 600)" \
-    "$(config_get APT_WAIT_INTERVAL 5)" \
-    || exit 1
+    "$(config_get APT_WAIT_INTERVAL 5)" ||
+    exit 1
 
 if $NON_INTERACTIVE; then
     log_info "Mode non interactif activé."
 fi
-
 
 # ----------------------------------------------------------------------------
 # Routing
 # ----------------------------------------------------------------------------
 
 case "${COMMAND:-}" in
-    all|install)
+    all | install)
         run_all_modules
         ;;
     system)
@@ -191,7 +191,7 @@ case "${COMMAND:-}" in
     docker)
         run_module "20_docker"
         ;;
-    proxy|reverse-proxy)
+    proxy | reverse-proxy)
         run_module "30_reverse_proxy"
         ;;
     backup)
@@ -200,22 +200,22 @@ case "${COMMAND:-}" in
     restore)
         run_module "41_restore"
         ;;
-    logrotate|logs)
+    logrotate | logs)
         run_module "50_logrotate"
         ;;
-    updates|update)
+    updates | update)
         run_module "60_updates"
         ;;
     reboot)
         run_module "70_reboot"
         ;;
-    healthcheck|monitoring)
+    healthcheck | monitoring)
         run_module "80_monitoring"
         ;;
-    finalize|check)
+    finalize | check)
         run_module "90_finalize"
         ;;
-    help|"")
+    help | "")
         usage
         ;;
     *)

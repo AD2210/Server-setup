@@ -4,7 +4,7 @@ log_step "Création du timer de redémarrage"
 SERVICE="/etc/systemd/system/server-setup-reboot.service"
 TIMER="/etc/systemd/system/server-setup-reboot.timer"
 
-cat > "$SERVICE" <<'EOF'
+cat >"$SERVICE" <<'EOF'
 [Unit]
 Description=Server Setup - Redémarrage périodique
 
@@ -13,7 +13,7 @@ Type=oneshot
 ExecStart=/usr/bin/systemctl reboot
 EOF
 
-cat > "$TIMER" <<EOF
+cat >"$TIMER" <<EOF
 [Unit]
 Description=Server Setup - Timer de redémarrage périodique
 
