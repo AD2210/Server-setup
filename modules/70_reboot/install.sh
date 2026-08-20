@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 70_reboot
+## Configuration du redémarrage périodique via systemd
+## ============================================================================
+
 set -euo pipefail
 MODULE_DIR="$PROJECT_DIR/modules/70_reboot"
 

@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 60_updates
+## Configuration des mises à jour automatiques et des timers APT
+## ============================================================================
+
 set -euo pipefail
 MODULE_DIR="$PROJECT_DIR/modules/60_updates"
 

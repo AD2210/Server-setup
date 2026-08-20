@@ -165,6 +165,22 @@ run_script_permissions_check() {
     fi
 }
 
+run_module_header_check() {
+    local file
+
+    while IFS= read -r file; do
+        if sed -n '1,14p' "$file" | grep -q '^## Module '; then
+            continue
+        fi
+
+        log_error "Bloc descriptif absent : ${file#"$PROJECT_DIR/"}"
+    done < <(find "$PROJECT_DIR/modules" -mindepth 2 -maxdepth 2 -name install.sh -print | sort)
+
+    if [ "$FAILED" = false ]; then
+        log_ok "En-têtes des modules"
+    fi
+}
+
 run_bash_syntax
 run_shellcheck
 run_shfmt
@@ -174,6 +190,7 @@ run_yaml_lint
 run_caddy_validate
 run_setup_help_check
 run_script_permissions_check
+run_module_header_check
 
 if $FAILED; then
     exit 1

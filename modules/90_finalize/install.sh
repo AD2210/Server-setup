@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 90_finalize
+## Contrôles finaux du système, services, timers et configuration
+## ============================================================================
+
 set -euo pipefail
 MODULE_DIR="$PROJECT_DIR/modules/90_finalize"
 

@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 40_backup
+## Configuration des sauvegardes PostgreSQL, fichiers et snapshots provider
+## ============================================================================
+
 set -euo pipefail
 
 MODULE_DIR="$PROJECT_DIR/modules/40_backup"

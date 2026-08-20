@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 50_logrotate
+## Configuration de la rotation des logs Caddy et applicatifs
+## ============================================================================
+
 set -euo pipefail
 MODULE_DIR="$PROJECT_DIR/modules/50_logrotate"
 

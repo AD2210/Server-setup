@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## ============================================================================
+## Module 20_docker
+## Installation et configuration de Docker, Compose et du runtime release
+## ============================================================================
+
 set -euo pipefail
 MODULE_DIR="$PROJECT_DIR/modules/20_docker"
 log_module "Installation et configuration de Docker"
