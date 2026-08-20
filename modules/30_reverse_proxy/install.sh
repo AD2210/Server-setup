@@ -6,11 +6,10 @@
 ##
 ## Étapes :
 ## - vérification de l'environnement Caddy et /srv/apps
-## - inventaire des ports HTTP et DB déjà utilisés
-## - saisie et validation des endpoints
-## - préparation du dossier applicatif
-## - affichage des indications Compose / .env
-## - génération, validation et rechargement du Caddyfile
+## - installation du Caddyfile serveur de référence
+## - installation des snippets communs
+## - préparation des répertoires snippets et applications
+## - validation et rechargement du Caddyfile
 ## - contrôles finaux
 ##
 ## Les prérequis globaux sont contrôlés par bin/setup.
@@ -23,9 +22,6 @@ MODULE_DIR="$PROJECT_DIR/modules/30_reverse_proxy"
 log_module "Configuration du reverse proxy Caddy"
 
 source "$MODULE_DIR/steps/10_environment.sh"
-source "$MODULE_DIR/steps/20_inventory.sh"
-source "$MODULE_DIR/steps/30_endpoints.sh"
-source "$MODULE_DIR/steps/40_application.sh"
 source "$MODULE_DIR/steps/50_caddy.sh"
 source "$MODULE_DIR/steps/90_summary.sh"
 

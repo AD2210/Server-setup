@@ -4,25 +4,17 @@
 ## Étape 10 - Vérification de l'environnement
 ## ============================================================================
 
-log_step "Vérification de l'environnement Caddy"
+log_step "Préparation de l'environnement Caddy"
 
 APPS_DIR="/srv/apps"
 CADDYFILE="/etc/caddy/Caddyfile"
+CADDY_DIR="/etc/caddy"
+CADDY_SNIPPETS_DIR="$CADDY_DIR/snippets"
+CADDY_APPS_DIR="$CADDY_DIR/apps"
 DEPLOY_USER="${SUDO_USER:-root}"
 
 if ! command_exists caddy; then
     log_error "Caddy n'est pas installé."
-    exit 1
-fi
-
-if [ ! -f "$CADDYFILE" ]; then
-    log_error "Caddyfile introuvable : $CADDYFILE"
-    exit 1
-fi
-
-if [ ! -r "$CADDYFILE" ] || [ ! -w "$CADDYFILE" ]; then
-    log_error "Le Caddyfile n'est pas accessible en lecture/écriture."
-    log_info "Fichier concerné : $CADDYFILE"
     exit 1
 fi
 
@@ -43,6 +35,14 @@ if [ ! -d "$APPS_DIR" ]; then
     mkdir -p "$APPS_DIR"
     chown root:root "$APPS_DIR"
     chmod 755 "$APPS_DIR"
+fi
+
+install -d -m 755 -o root -g root "$CADDY_SNIPPETS_DIR" "$CADDY_APPS_DIR"
+
+if [ -e "$CADDYFILE" ] && [ ! -r "$CADDYFILE" -o ! -w "$CADDYFILE" ]; then
+    log_error "Le Caddyfile n'est pas accessible en lecture/écriture."
+    log_info "Fichier concerné : $CADDYFILE"
+    exit 1
 fi
 
 log_info "Caddy opérationnel."

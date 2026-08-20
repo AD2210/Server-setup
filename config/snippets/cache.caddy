@@ -1,0 +1,7 @@
+(cache) {
+    @static_assets {
+        path *.css *.js *.mjs *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp *.woff *.woff2
+    }
+
+    header @static_assets Cache-Control "public, max-age=604800, immutable"
+}

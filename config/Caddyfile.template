@@ -1,3 +1,6 @@
-:80 {
-    respond "Caddy is running"
+{
+    admin localhost:2019
 }
+
+import snippets/*.caddy
+import apps/*.caddy

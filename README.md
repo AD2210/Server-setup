@@ -338,58 +338,48 @@ Le projet ne fournit volontairement pas de template applicatif universel : les f
 sudo setup reverse-proxy
 ```
 
-Configure une nouvelle application derrière Caddy.
+Installe et valide uniquement le socle serveur Caddy. Les endpoints applicatifs
+ne sont pas demandés par Server Setup : ils sont gérés par le dépôt de chaque
+application et copiés par la CD.
 
-Le Caddyfile global est centralisé dans :
-
-```text
-/etc/caddy/Caddyfile
-```
-
-Cette centralisation permet notamment :
-
-* d'avoir une vue globale des domaines ;
-* d'identifier les ports HTTP déjà utilisés ;
-* d'éviter les collisions ;
-* de gérer plusieurs endpoints pour une même application.
-
-Le module demande :
-
-* le nom de l'application ;
-* un ou plusieurs domaines ;
-* le port associé à chaque endpoint ;
-* le service concerné.
-
-Une application peut ainsi exposer plusieurs endpoints.
-
-Exemple :
+L'arborescence utilisée est :
 
 ```text
-app1
-├── app.example.com → frontend → port 3000
-└── api.example.com → backend  → port 8000
+/etc/caddy/
+├── Caddyfile
+├── acces.log
+├── snippets/       # snippets communs serveur
+└── apps/           # fichiers Caddy déposés par la CD
 ```
 
-Le module contrôle notamment :
-
-* les domaines déjà présents ;
-* les ports déjà utilisés dans Caddy ;
-* les doublons saisis pendant la configuration ;
-* la présence de `/srv/apps` ;
-* l'existence éventuelle du dossier applicatif ;
-* la validité du Caddyfile avant application.
-
-Les plages conseillées sont présentées à titre indicatif :
+Les fichiers fournis dans le dépôt sont copiés uniquement lorsqu'ils
+n'existent pas encore :
 
 ```text
-Frontend : 3000-3999
-API      : 8000-8999
-Divers   : 9000+
+config/Caddyfile.example
+config/snippets/security.caddy
+config/snippets/logging.caddy
+config/snippets/cache.caddy
 ```
 
-Le module valide la nouvelle configuration Caddy avant son activation et évite de conserver une configuration invalide en cas d'échec.
+Les snippets communs disponibles sont `security`, `logging` et `cache`. Un
+fichier applicatif peut les utiliser ainsi :
 
-Les ports PostgreSQL éventuellement détectés dans les environnements applicatifs sont affichés uniquement comme aide à l'administration et à la prévention des collisions. Ils ne sont pas publiés par le script.
+```caddyfile
+app.example.com {
+    import security
+    import logging
+    import cache
+    reverse_proxy 127.0.0.1:8000
+}
+```
+
+Le fichier `/etc/caddy/acces.log` contient les logs d'accès au format JSON.
+Les logs runtime de Caddy restent gérés par le journal systemd et sont
+consultables avec `journalctl -u caddy`.
+
+Le module sauvegarde, valide et recharge la configuration. En cas d'échec du
+reload, le Caddyfile précédent est restauré automatiquement.
 
 ---
 

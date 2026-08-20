@@ -1,16 +1,56 @@
 #!/usr/bin/env bash
 
 ## ============================================================================
-## Étape 50 - Génération et rechargement du Caddyfile
+## Étape 50 - Installation du socle Caddy
 ##
-## - sauvegarde le Caddyfile
-## - travaille dans un fichier temporaire
-## - formate et valide la configuration
-## - conserve les permissions du Caddyfile original
-## - rollback si le reload échoue
+## Le module gère uniquement la configuration serveur.
+## Les fichiers d'application sont déposés dans /etc/caddy/apps par la CD.
 ## ============================================================================
 
-log_step "Mise à jour du Caddyfile"
+log_step "Installation de la configuration serveur Caddy"
+
+CADDY_TEMPLATE="$PROJECT_DIR/config/Caddyfile.example"
+CADDY_SNIPPETS_SOURCE="$PROJECT_DIR/config/snippets"
+CADDY_APPS_SOURCE="$PROJECT_DIR/config/apps"
+
+[ -r "$CADDY_TEMPLATE" ] || {
+    log_error "Template Caddy introuvable : $CADDY_TEMPLATE"
+    exit 1
+}
+
+[ -d "$CADDY_SNIPPETS_SOURCE" ] || {
+    log_error "Snippets Caddy introuvables : $CADDY_SNIPPETS_SOURCE"
+    exit 1
+}
+
+if [ ! -e "$CADDYFILE" ]; then
+    install -m 644 -o root -g root "$CADDY_TEMPLATE" "$CADDYFILE"
+    log_info "Caddyfile serveur installé : $CADDYFILE"
+else
+    log_info "Caddyfile existant conservé : $CADDYFILE"
+fi
+
+for snippet in "$CADDY_SNIPPETS_SOURCE"/*.caddy; do
+    [ -f "$snippet" ] || continue
+    target="$CADDY_SNIPPETS_DIR/$(basename "$snippet")"
+
+    if [ -e "$target" ]; then
+        log_info "Snippet existant conservé : $target"
+    else
+        install -m 644 -o root -g root "$snippet" "$target"
+        log_info "Snippet installé : $target"
+    fi
+done
+
+for app_file in "$CADDY_APPS_SOURCE"/*.caddy; do
+    [ -f "$app_file" ] || continue
+    target="$CADDY_APPS_DIR/$(basename "$app_file")"
+
+    if [ ! -e "$target" ]; then
+        install -m 644 -o root -g root "$app_file" "$target"
+        log_info "Fichier d'attente applicatif installé : $target"
+    fi
+done
 
 CADDY_BACKUP="$CADDYFILE.bak.$(date +%Y%m%d-%H%M%S)"
 TMP_CADDY="$(mktemp)"
@@ -26,60 +66,25 @@ if ! cp -a "$CADDYFILE" "$CADDY_BACKUP"; then
     exit 1
 fi
 
-log_info "Sauvegarde Caddy créée : $CADDY_BACKUP"
-
-if ! cp "$CADDYFILE" "$TMP_CADDY"; then
-    log_error "Impossible de préparer le Caddyfile temporaire."
+if ! caddy fmt --overwrite "$CADDYFILE" >/dev/null 2>&1; then
+    log_error "Impossible de formater le Caddyfile."
     exit 1
 fi
 
-{
-    echo ""
-    echo "# --- $APP_NAME ---"
-
-    for endpoint in "${ENDPOINTS[@]}"; do
-        IFS="|" read -r DOMAIN HOST_PORT SERVICE CONTAINER_PORT <<< "$endpoint"
-
-        cat <<EOF
-$DOMAIN {
-    reverse_proxy 127.0.0.1:$HOST_PORT
-}
-
-EOF
-    done
-
-    echo "# --- END $APP_NAME ---"
-} >> "$TMP_CADDY"
-
-run_quiet \
-    "Impossible de formater le nouveau Caddyfile." \
-    caddy fmt --overwrite "$TMP_CADDY" \
-    || exit 1
-
-run_quiet \
-    "La nouvelle configuration Caddy est invalide." \
-    caddy validate --config "$TMP_CADDY" --adapter caddyfile \
-    || exit 1
-
-# Écriture dans le fichier existant :
-# on conserve ainsi son propriétaire et ses permissions.
-if ! cat "$TMP_CADDY" > "$CADDYFILE"; then
-    log_error "Impossible de mettre à jour le Caddyfile."
+if ! caddy validate --config "$CADDYFILE" --adapter caddyfile >"$TMP_CADDY" 2>&1; then
+    log_error "La configuration Caddy est invalide."
+    cat "$TMP_CADDY" >&2
+    cp -a "$CADDY_BACKUP" "$CADDYFILE"
     exit 1
 fi
 
-if ! run_quiet "Le rechargement de Caddy a échoué." systemctl reload caddy; then
-    log_warn "Rollback du Caddyfile."
+if ! systemctl reload caddy >"$TMP_CADDY" 2>&1; then
+    log_error "Le rechargement de Caddy a échoué."
+    cat "$TMP_CADDY" >&2
+    cp -a "$CADDY_BACKUP" "$CADDYFILE"
 
-    if ! cat "$CADDY_BACKUP" > "$CADDYFILE"; then
-        log_error "Impossible de restaurer le Caddyfile."
-        exit 1
-    fi
-
-    if ! run_quiet \
-        "Caddy ne redémarre pas après rollback." \
-        systemctl restart caddy; then
-        log_error "Intervention manuelle requise sur le service Caddy."
+    if ! systemctl restart caddy >/dev/null 2>&1; then
+        log_error "Caddy ne redémarre pas après rollback."
         exit 1
     fi
 
@@ -87,4 +92,4 @@ if ! run_quiet "Le rechargement de Caddy a échoué." systemctl reload caddy; th
     exit 1
 fi
 
-log_info "Caddyfile validé et rechargé."
+log_info "Configuration serveur Caddy validée et rechargée."
