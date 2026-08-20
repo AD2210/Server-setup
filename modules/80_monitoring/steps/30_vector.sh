@@ -19,8 +19,31 @@ else
 fi
 
 if [ ! -e "$VECTOR_ENV_FILE" ]; then
-    install -m 600 -o root -g root \
-        "$PROJECT_DIR/config/vector/vector.env.example" "$VECTOR_ENV_FILE"
+    VECTOR_ENV_TMP="$(mktemp)"
+    cp "$PROJECT_DIR/config/vector/vector.env.example" "$VECTOR_ENV_TMP"
+    sed -i \
+        -e '/^VECTOR_INSTANCE=/d' \
+        -e '/^VECTOR_CLIENT_ID=/d' \
+        -e '/^VECTOR_CLIENT_SECRET=/d' \
+        "$VECTOR_ENV_TMP"
+
+    printf 'VECTOR_INSTANCE="%s"\n' \
+        "$(config_get MONITORING_INSTANCE "$(hostname -s)")" >> "$VECTOR_ENV_TMP"
+
+    if config_has MONITORING_CLIENT_ID; then
+        printf 'VECTOR_CLIENT_ID="%s"\n' "$(config_get MONITORING_CLIENT_ID)" >> "$VECTOR_ENV_TMP"
+    else
+        printf 'VECTOR_CLIENT_ID="CHANGE_ME"\n' >> "$VECTOR_ENV_TMP"
+    fi
+
+    if config_has MONITORING_CLIENT_SECRET; then
+        printf 'VECTOR_CLIENT_SECRET="%s"\n' "$(config_get MONITORING_CLIENT_SECRET)" >> "$VECTOR_ENV_TMP"
+    else
+        printf 'VECTOR_CLIENT_SECRET="CHANGE_ME"\n' >> "$VECTOR_ENV_TMP"
+    fi
+
+    install -m 600 -o root -g root "$VECTOR_ENV_TMP" "$VECTOR_ENV_FILE"
+    rm -f "$VECTOR_ENV_TMP"
 else
     log_info "Configuration Vector existante conservée : $VECTOR_ENV_FILE"
 fi

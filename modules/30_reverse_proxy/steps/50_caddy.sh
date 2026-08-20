@@ -29,6 +29,19 @@ if [ ! -e "$CADDYFILE" ]; then
 elif ! grep -Fq 'import apps/*.caddy' "$CADDYFILE"; then
     CADDY_MIGRATION_BACKUP="$CADDYFILE.migration.$(date +%Y%m%d-%H%M%S)"
 
+    log_warn "Le Caddyfile actuel ne sépare pas encore la configuration serveur des applications."
+    if $NON_INTERACTIVE; then
+        confirm_required \
+            "Remplacer le Caddyfile actuel après sauvegarde ?" \
+            "CADDY_MIGRATION_CONFIRM" || {
+            log_error "Migration Caddy refusée ou non configurée."
+            exit 1
+        }
+    elif ! confirm "Remplacer le Caddyfile actuel après sauvegarde ?"; then
+        log_error "Migration Caddy annulée."
+        exit 1
+    fi
+
     if ! cp -a "$CADDYFILE" "$CADDY_MIGRATION_BACKUP"; then
         log_error "Impossible de sauvegarder l'ancien Caddyfile avant migration."
         exit 1

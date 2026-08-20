@@ -1014,9 +1014,11 @@ Vector convertit les événements en JSON et prévoit trois destinations :
 
 ```text
 /etc/server-setup/monitoring/vector.env
-├── VECTOR_SYSTEM_LOG_ENDPOINT
+├── VECTOR_JOURNAL_LOG_ENDPOINT
 ├── VECTOR_DOCKER_LOG_ENDPOINT
-└── VECTOR_SYMFONY_LOG_ENDPOINT
+├── VECTOR_SYMFONY_LOG_ENDPOINT
+├── VECTOR_CLIENT_ID
+└── VECTOR_CLIENT_SECRET
 ```
 
 Les valeurs initiales utilisent l'endpoint provisoire suivant :
@@ -1028,7 +1030,26 @@ https://monitoring.dsn-dev.fr/api/CHANGE_ME/logs/{type}
 Tant que `CHANGE_ME` n'est pas remplacé par l'instance réelle, Vector reste
 installé mais désactivé. Les logs Symfony sont recherchés dans
 `/srv/apps/*/var/log/*.log`, tandis que les logs Docker sont lus via le socket
-Docker et les logs système via journald.
+Docker et les logs système via journald. Les requêtes portent les headers
+`X-Client-ID` et `X-Client-Secret`.
+
+Chaque événement est envoyé dans une enveloppe JSON de cette forme :
+
+```json
+{
+  "instance": {"server": "vps-01", "app": "my-app"},
+  "timestamp_utc": "2026-08-20T12:00:00Z",
+  "log_type": "symfony",
+  "from": null,
+  "to": null,
+  "log": {}
+}
+```
+
+Le champ `app` est ajouté lorsqu'il peut être déduit du chemin du log. La
+version applicative n'est pas ajoutée automatiquement car elle n'est pas
+présente de façon fiable dans les événements de logs ; elle pourra être
+ajoutée lorsque le contrat API et le mécanisme de déploiement seront définis.
 
 ---
 

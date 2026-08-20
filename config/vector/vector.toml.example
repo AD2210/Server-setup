@@ -18,39 +18,56 @@ read_from = "end"
 type = "remap"
 inputs = ["system_journal"]
 source = '''
-.instance = get_env_var!("VECTOR_INSTANCE")
-.log_type = "system"
+original = .
+.instance = {"server": get_env_var!("VECTOR_INSTANCE")}
+.timestamp_utc = now()
+.log_type = "journal"
+.from = null
+.to = null
+.log = original
 '''
 
 [transforms.docker_json]
 type = "remap"
 inputs = ["docker"]
 source = '''
-.instance = get_env_var!("VECTOR_INSTANCE")
+original = .
+.instance = {"server": get_env_var!("VECTOR_INSTANCE")}
+.timestamp_utc = now()
 .log_type = "docker"
+.from = null
+.to = null
+.log = original
 '''
 
 [transforms.symfony_json]
 type = "remap"
 inputs = ["symfony"]
 source = '''
-.instance = get_env_var!("VECTOR_INSTANCE")
+original = .
+.instance = {"server": get_env_var!("VECTOR_INSTANCE")}
+.timestamp_utc = now()
 .log_type = "symfony"
+.from = null
+.to = null
 if exists(.file) {
   parsed, err = parse_regex(.file, r'/srv/apps/(?P<app>[^/]+)/')
   if err == null {
-    .app = parsed.app
+    .instance.app = parsed.app
   }
 }
+.log = original
 '''
 
 [sinks.system_monitoring]
 type = "http"
 inputs = ["system_json"]
-uri = "${VECTOR_SYSTEM_LOG_ENDPOINT}"
+uri = "${VECTOR_JOURNAL_LOG_ENDPOINT}"
 method = "post"
 encoding.codec = "json"
 request.headers.Content-Type = "application/json"
+request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
+request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
 
 [sinks.docker_monitoring]
 type = "http"
@@ -59,6 +76,8 @@ uri = "${VECTOR_DOCKER_LOG_ENDPOINT}"
 method = "post"
 encoding.codec = "json"
 request.headers.Content-Type = "application/json"
+request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
+request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
 
 [sinks.symfony_monitoring]
 type = "http"
@@ -67,3 +86,5 @@ uri = "${VECTOR_SYMFONY_LOG_ENDPOINT}"
 method = "post"
 encoding.codec = "json"
 request.headers.Content-Type = "application/json"
+request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
+request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
