@@ -18,6 +18,11 @@ PROJECT_DIR="$(cd "$QA_DIR/.." && pwd)"
 ALLOW_MISSING_TOOLS="${QA_ALLOW_MISSING_TOOLS:-false}"
 FAILED=false
 
+if ! command -v rg >/dev/null 2>&1; then
+    printf '[QA][ERROR] Outil requis absent : ripgrep (rg)\n' >&2
+    exit 1
+fi
+
 log_ok() { printf '[QA][OK] %s\n' "$1"; }
 log_warn() { printf '[QA][WARN] %s\n' "$1" >&2; }
 log_error() { printf '[QA][ERROR] %s\n' "$1" >&2; FAILED=true; }
