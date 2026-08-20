@@ -69,6 +69,9 @@ request.headers.Content-Type = "application/json"
 request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
 request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
 
+[sinks.system_monitoring.batch]
+max_events = 1
+
 [sinks.docker_monitoring]
 type = "http"
 inputs = ["docker_json"]
@@ -79,6 +82,9 @@ request.headers.Content-Type = "application/json"
 request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
 request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
 
+[sinks.docker_monitoring.batch]
+max_events = 1
+
 [sinks.symfony_monitoring]
 type = "http"
 inputs = ["symfony_json"]
@@ -88,3 +94,6 @@ encoding.codec = "json"
 request.headers.Content-Type = "application/json"
 request.headers."X-Client-ID" = "${VECTOR_CLIENT_ID}"
 request.headers."X-Client-Secret" = "${VECTOR_CLIENT_SECRET}"
+
+[sinks.symfony_monitoring.batch]
+max_events = 1
