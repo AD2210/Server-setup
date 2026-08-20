@@ -121,18 +121,22 @@ De même, une remote rclone doit être préparée dans
 
 Cela évite d'introduire des pseudo-tableaux complexes dans `setup.conf`.
 
-## Migration des modules
+La restauration utilise un fichier dédié, par exemple
+`config/restore.example.conf`, afin de ne pas mélanger ses choix avec la
+configuration générale du serveur.
 
-Le socle fourni dans cette branche n'oblige pas à migrer tous les modules en une
-fois.
+## Compatibilité des modules
 
-Tant qu'un module utilise :
+Les paramètres simples des modules utilisent maintenant une clé de configuration.
+Un prompt résiduel sans clé est volontairement limité au mode interactif ou à
+une configuration structurée dédiée. Tant qu'un module utilise :
 
 ```bash
 ask_input "Question" "défaut"
 ```
 
-il reste parfaitement interactif.
+il reste interactif et doit recevoir une configuration dédiée avant d'être
+utilisé en unattended.
 
 Pour le rendre compatible unattended, ajouter simplement la clé :
 
