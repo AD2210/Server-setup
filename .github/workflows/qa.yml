@@ -2,6 +2,8 @@ name: QA
 
 on:
   push:
+    tags:
+      - 'v*.*.*'
   pull_request:
 
 permissions:
