@@ -125,6 +125,14 @@ La restauration utilise un fichier dédié, par exemple
 `config/restore.example.conf`, afin de ne pas mélanger ses choix avec la
 configuration générale du serveur.
 
+Le module monitoring borne l'installation et l'initialisation d'Ember afin
+d'éviter un blocage silencieux en unattended :
+
+```bash
+EMBER_INSTALL_TIMEOUT="300"
+EMBER_INIT_TIMEOUT="60"
+```
+
 ## Compatibilité des modules
 
 Les paramètres simples des modules utilisent maintenant une clé de configuration.
