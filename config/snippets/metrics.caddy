@@ -1,2 +1,4 @@
 # Ember utilise les métriques Caddy via l'API d'administration locale.
-metrics
+servers {
+    metrics
+}
