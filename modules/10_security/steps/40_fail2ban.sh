@@ -27,14 +27,36 @@ cp "$FAIL2BAN_SOURCE" "$FAIL2BAN_CONFIG" || {
     exit 1
 }
 
-if grep -qE '^[[:space:]]*port[[:space:]]*=' "$FAIL2BAN_CONFIG"; then
-    sed -i -E \
-        "s|^[[:space:]]*port[[:space:]]*=.*|port = $SSH_PORT|" \
-        "$FAIL2BAN_CONFIG"
-else
-    log_warn "Aucune directive 'port =' trouvée dans jail.local."
-    log_info "Vérifiez que le jail SSH utilise bien le port $SSH_PORT."
+fail2ban_tmp="$(mktemp)"
+awk -v ssh_port="$SSH_PORT" '
+    /^\[/ { section = $0 }
+    section == "[sshd]" && /^[[:space:]]*port[[:space:]]*=/ {
+        print "port = " ssh_port
+        next
+    }
+    { print }
+' "$FAIL2BAN_CONFIG" > "$fail2ban_tmp"
+cat "$fail2ban_tmp" > "$FAIL2BAN_CONFIG"
+rm -f "$fail2ban_tmp"
+
+# The template does not ship a Caddy filter. An enabled jail referencing a
+# missing filter prevents Fail2ban from starting, including SSH protection.
+if [ ! -f /etc/fail2ban/filter.d/caddy.conf ]; then
+    fail2ban_tmp="$(mktemp)"
+    awk '
+        /^\[/ { section = $0 }
+        section == "[caddy]" && /^[[:space:]]*enabled[[:space:]]*=/ {
+            print "enabled = false"
+            next
+        }
+        { print }
+    ' "$FAIL2BAN_CONFIG" > "$fail2ban_tmp"
+    cat "$fail2ban_tmp" > "$FAIL2BAN_CONFIG"
+    rm -f "$fail2ban_tmp"
+    log_warn "Jail Caddy désactivée : filtre caddy.conf absent. Protection SSH conservée."
 fi
+
+run_quiet "Configuration Fail2ban invalide." fail2ban-client -t || exit 1
 
 run_quiet "Impossible d'activer Fail2ban au démarrage." \
     systemctl enable fail2ban || exit 1

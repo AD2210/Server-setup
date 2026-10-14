@@ -1,3 +1,6 @@
-:80 {
-    respond "Caddy is running"
+{
+    metrics
 }
+
+import /etc/caddy/snippets/*.caddy
+import /etc/caddy/apps/*.caddy

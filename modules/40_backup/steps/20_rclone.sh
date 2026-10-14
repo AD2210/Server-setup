@@ -16,7 +16,7 @@ if [ -n "$REMOTES" ]; then
         [ -n "$remote" ] && log "  ${remote%:}"
     done <<< "$REMOTES"
 
-    if ! confirm "Conserver la configuration rclone existante ?"; then
+    if ! confirm "Conserver la configuration rclone existante ?" "KEEP_RCLONE_CONFIG" "true"; then
         rclone config --config "$RCLONE_CONFIG"
         REMOTES="$(rclone listremotes --config "$RCLONE_CONFIG" 2>/dev/null || true)"
     fi
@@ -29,7 +29,7 @@ fi
 [ -n "$REMOTES" ] || { log_error "Aucune remote rclone disponible."; exit 1; }
 
 DEFAULT_REMOTE="$(head -n1 <<< "$REMOTES" | sed 's/:$//')"
-RCLONE_REMOTE="$(ask_input "Remote utilisée pour les sauvegardes" "$DEFAULT_REMOTE")"
+RCLONE_REMOTE="$(ask_input "Remote utilisée pour les sauvegardes" "$DEFAULT_REMOTE" "RCLONE_REMOTE")"
 
 rclone listremotes --config "$RCLONE_CONFIG" | grep -qx "${RCLONE_REMOTE}:" || {
     log_error "Remote inconnue : $RCLONE_REMOTE"

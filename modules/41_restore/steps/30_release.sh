@@ -19,7 +19,9 @@ restore_release() {
     slot="$(ask_input "Release à charger (current/previous)" "previous" "RESTORE_RELEASE_SLOT")"
     case "$slot" in current|previous) ;; *) log_error "Slot invalide."; return 1 ;; esac
 
-    compose_file="$(ask_input "Fichier Compose" "compose.yaml" "RESTORE_COMPOSE_FILE")"
+    local default_compose=compose.yaml
+    [ -f "/srv/apps/$app/compose.runtime.yaml" ] && default_compose=compose.runtime.yaml
+    compose_file="$(ask_input "Fichier Compose" "$default_compose" "RESTORE_COMPOSE_FILE")"
     [ -f "/srv/apps/$app/$compose_file" ] || { log_error "Compose introuvable."; return 1; }
 
     temp_env="$(mktemp)"

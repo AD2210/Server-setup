@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 log_step "Détection de l'utilisateur administrateur"
 
-ADMIN_USER="${SUDO_USER:-$(logname 2>/dev/null || true)}"
+ADMIN_USER="${DOCKER_ADMIN_USER:-${ADMIN_USER:-${SUDO_USER:-$(logname 2>/dev/null || true)}}}"
 
 if [ -z "$ADMIN_USER" ] || [ "$ADMIN_USER" = "root" ]; then
     log_warn "Impossible de détecter automatiquement l'utilisateur administrateur."
-    ADMIN_USER=$(ask_input "Utilisateur à autoriser à utiliser Docker" "")
+    ADMIN_USER=$(ask_input "Utilisateur à autoriser à utiliser Docker" "" "DOCKER_ADMIN_USER")
     [ -n "$ADMIN_USER" ] || { log_error "Aucun utilisateur renseigné."; exit 1; }
 fi
 

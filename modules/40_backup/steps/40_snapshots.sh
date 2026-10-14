@@ -10,7 +10,7 @@ log "  logical  : snapshot logique uniquement"
 log "  provider : snapshot fournisseur uniquement"
 log "  both     : snapshot logique + fournisseur"
 
-SNAPSHOT_MODE="$(ask_input "Mode snapshot" "logical")"
+SNAPSHOT_MODE="$(ask_input "Mode snapshot" "logical" "SNAPSHOT_MODE")"
 
 case "$SNAPSHOT_MODE" in
     none) ;;
@@ -41,6 +41,7 @@ if $PROVIDER_BACKUP_ENABLED; then
     [ -f "$PROVIDER_SOURCE" ] || { log_error "Adaptateur provider absent : $PROVIDER_SOURCE"; exit 1; }
 
     if [ "$PROVIDER_NAME" = "ovh" ]; then
+        run_quiet "Impossible d'installer le support OVH." apt-get install -y python3-venv || exit 1
         OVH_VENV="$PROVIDER_STATE_DIR/ovh-venv"
         OVH_CONFIG="$PROVIDER_CONFIG_DIR/ovh.conf"
 

@@ -10,7 +10,7 @@ REMOTE="${RCLONE_REMOTE}:${REMOTE_ROOT}/files/$STAMP"
 mkdir -p "$WORK"
 chmod 700 "$WORK"
 
-ARGS=(--numeric-owner --xattrs --acls --ignore-failed-read)
+ARGS=(--numeric-owner --xattrs --acls)
 if [ -r "$EXCLUDES" ]; then
     while IFS= read -r pattern; do
         [ -z "$pattern" ] && continue
@@ -23,8 +23,9 @@ SOURCES=(etc)
 [ -d /opt/server-setup ] && SOURCES+=(opt/server-setup)
 [ -d /opt/Server-setup ] && SOURCES+=(opt/Server-setup)
 [ -d /srv/apps ] && SOURCES+=(srv/apps)
+[ -d /srv/app ] && SOURCES+=(srv/app)
 
-tar "${ARGS[@]}" -C / -cf - "${SOURCES[@]}" 2>/dev/null     | zstd -T0 -q -o "$WORK/system.tar.zst"
+tar "${ARGS[@]}" -C / -cf - "${SOURCES[@]}"     | zstd -T0 -q -o "$WORK/system.tar.zst"
 
 (cd "$WORK"; sha256sum system.tar.zst > SHA256SUMS)
 touch "$WORK/COMPLETE"

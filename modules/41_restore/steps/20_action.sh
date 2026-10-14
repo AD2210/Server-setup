@@ -91,6 +91,12 @@ restore_db() {
                 DB_NAME="$(printenv "$BACKUP_DB_NAME_ENV")"
                 DB_USER="$(printenv "$BACKUP_DB_USER_ENV")"
                 DB_PASSWORD="$(printenv "$BACKUP_DB_PASSWORD_ENV")"
+                case "$BACKUP_DB_PASSWORD_ENV" in
+                    *_FILE)
+                        [ -r "$DB_PASSWORD" ] || exit 21
+                        DB_PASSWORD="$(cat "$DB_PASSWORD")"
+                        ;;
+                esac
                 export PGPASSWORD="$DB_PASSWORD"
                 exec pg_restore --clean --if-exists --no-owner --no-privileges \
                     -U "$DB_USER" -d "$DB_NAME"

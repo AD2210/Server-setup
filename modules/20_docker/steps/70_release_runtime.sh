@@ -8,3 +8,6 @@ TARGET="/usr/local/bin/server-release"
 
 install -m 755 -o root -g root "$SOURCE" "$TARGET"
 log_info "Gestionnaire installé : $TARGET"
+
+install -m 755 -o root -g root "$MODULE_DIR/runtime/server-api-config.sh" /usr/local/bin/server-api-config
+log_info "Distribution des API installée : /usr/local/bin/server-api-config"

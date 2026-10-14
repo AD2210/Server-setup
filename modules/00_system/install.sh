@@ -31,6 +31,8 @@ REQUIRED_PACKAGES=(
     git
     ufw
     caddy
+    make
+    jq
 )
 
 
@@ -70,6 +72,8 @@ run_quiet \
 # ----------------------------------------------------------------------------
 
 log_step "Installation des dépendances système"
+
+source "$PROJECT_DIR/modules/00_system/steps/10_caddy_repository.sh"
 
 run_quiet \
     "Impossible d'installer les dépendances système." \

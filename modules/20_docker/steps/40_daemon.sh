@@ -28,7 +28,7 @@ EOF
 
 chmod 644 "$DOCKER_DAEMON_FILE"
 
-python3 -m json.tool "$DOCKER_DAEMON_FILE" >/dev/null 2>&1 || {
+dockerd --validate --config-file "$DOCKER_DAEMON_FILE" >/dev/null 2>&1 || {
     log_error "Le fichier $DOCKER_DAEMON_FILE contient un JSON invalide."
     if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
         log_warn "Restauration de la configuration précédente."

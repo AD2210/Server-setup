@@ -5,7 +5,7 @@ BACKUP_CONFIG_DIR="/etc/server-setup/backup"
 BACKUP_TARGETS_DIR="$BACKUP_CONFIG_DIR/targets.d"
 install -d -m 700 -o root -g root "$BACKUP_CONFIG_DIR" "$BACKUP_TARGETS_DIR"
 
-DB_BACKUP_ENABLED=false
+DB_BACKUP_ENABLED="${DB_BACKUP_ENABLED:-false}"
 
 get_compose_files_for_app() {
     find "$1" -maxdepth 2 -type f \(         -iname "compose*.yml" -o -iname "compose*.yaml" -o         -iname "docker-compose*.yml" -o -iname "docker-compose*.yaml"     \) 2>/dev/null | sort
@@ -51,7 +51,7 @@ EOF
     log_info "Cible PostgreSQL '$name' enregistrée."
 }
 
-if confirm "Configurer les sauvegardes PostgreSQL ?"; then
+if confirm "Configurer les sauvegardes PostgreSQL ?" "DB_BACKUP_ENABLED"; then
     DB_BACKUP_ENABLED=true
 
     if compgen -G "$BACKUP_TARGETS_DIR/*.conf" >/dev/null; then

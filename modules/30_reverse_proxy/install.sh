@@ -23,6 +23,11 @@ MODULE_DIR="$PROJECT_DIR/modules/30_reverse_proxy"
 log_module "Configuration du reverse proxy Caddy"
 
 source "$MODULE_DIR/steps/10_environment.sh"
+source "$MODULE_DIR/steps/15_shared_config.sh"
+if [[ "${PROXY_SHARED_ONLY:-false}" == true ]]; then
+    log_success "Configuration Caddy partagée installée ; endpoints applicatifs conservés."
+    return 0
+fi
 source "$MODULE_DIR/steps/20_inventory.sh"
 source "$MODULE_DIR/steps/30_endpoints.sh"
 source "$MODULE_DIR/steps/40_application.sh"
