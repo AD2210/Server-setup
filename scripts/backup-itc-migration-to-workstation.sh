@@ -11,7 +11,8 @@ backup_dir="$backup_root/$stamp"
 install -d -m 700 "$backup_root"
 exec 9>"$backup_root/.backup.lock"
 flock -n 9 || {
-    printf 'Une autre sauvegarde ITC est deja en cours.\n' >&2; exit 1
+    printf 'Une autre sauvegarde ITC est deja en cours.\n' >&2
+    exit 1
 }
 install -d -m 700 "$backup_dir"
 
