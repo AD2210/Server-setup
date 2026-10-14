@@ -19,9 +19,9 @@ for value in "$LOCAL_RETENTION_DAYS" "$REMOTE_RETENTION_DAYS"; do
     }
 done
 
-DB_SCHEDULE=""
-FILES_SCHEDULE=""
-PROVIDER_SCHEDULE=""
+DB_SCHEDULE="${DB_SCHEDULE:-}"
+FILES_SCHEDULE="${FILES_SCHEDULE:-}"
+PROVIDER_SCHEDULE="${PROVIDER_SCHEDULE:-}"
 
 $DB_BACKUP_ENABLED && DB_SCHEDULE="$(ask_input "Fréquence des dumps PostgreSQL (OnCalendar)" "*-*-* 02,08,14,20:15:00" "DB_SCHEDULE")"
 $FILES_BACKUP_ENABLED && FILES_SCHEDULE="$(ask_input "Fréquence du snapshot logique (OnCalendar)" "*-*-* 03:00:00" "FILES_SCHEDULE")"
@@ -52,8 +52,6 @@ if $FILES_BACKUP_ENABLED; then
 */vendor/*
 */var/cache/*
 */var/log/*
-*/data/*
-*/volumes/*
 EOF
     chmod 600 "$BACKUP_EXCLUDES"
 fi

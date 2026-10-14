@@ -110,7 +110,7 @@ download_complete_backup() {
 
 restore_db() {
     local backups id dir targets target target_file dump compose_file services_output service
-    local -a running_services=() application_services=()
+    local -a running_services=() application_services=() compose=(docker compose)
 
     backups="$(list_backups databases)"
     [ -n "$backups" ] || {
@@ -147,11 +147,21 @@ restore_db() {
         return 1
     }
 
+    COMPOSE_PROJECT_NAME=""
     # shellcheck disable=SC1090
     source "$target_file"
 
-    # shellcheck disable=SC2153
-    compose_file="$(basename "$COMPOSE_FILE")"
+    # Backups may use an atomic DB definition; restoration must retain workers.
+    compose_file="$COMPOSE_FILE"
+    [[ "$compose_file" = /* ]] || compose_file="$APP_DIR/$compose_file"
+    if [ -f "$APP_DIR/compose.runtime.yaml" ]; then
+        compose_file="$APP_DIR/compose.runtime.yaml"
+    fi
+    [ -f "$compose_file" ] || {
+        log_error "Manifeste Compose introuvable."; return 1
+    }
+    [ -z "$COMPOSE_PROJECT_NAME" ] || compose+=(--project-name "$COMPOSE_PROJECT_NAME")
+    [ ! -f "$APP_DIR/.env.prod.local" ] || compose+=(--env-file "$APP_DIR/.env.prod.local")
 
     log_warn "La restauration va interrompre les services applicatifs et remplacer entièrement la base '$target'."
     confirm_required "Confirmer la restauration de '$target' ?" "RESTORE_DB_CONFIRM" || return 0
@@ -159,7 +169,7 @@ restore_db() {
     # Why: les connexions applicatives doivent être coupées avant la suppression
     # de la base afin d'éviter des transactions concurrentes pendant le restore.
     if ! services_output="$(
-        cd "$APP_DIR" && docker compose -f "$compose_file" ps --status running --services
+        cd "$APP_DIR" && "${compose[@]}" -f "$compose_file" ps --status running --services
     )"; then
         log_error "Impossible de déterminer les services actuellement actifs."
         return 1
@@ -172,7 +182,7 @@ restore_db() {
 
     if [ "${#application_services[@]}" -gt 0 ] && ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" stop \
+        "${compose[@]}" -f "$compose_file" stop \
             "${application_services[@]}" >/dev/null
     ); then
         log_error "Impossible d'arrêter les services avant la restauration."
@@ -182,16 +192,16 @@ restore_db() {
     # Le service PostgreSQL doit rester disponible pour exécuter DROP/CREATE.
     if ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" up -d "$DB_SERVICE" >/dev/null
+        "${compose[@]}" -f "$compose_file" up -d "$DB_SERVICE" >/dev/null
     ); then
         log_error "Impossible de démarrer le service PostgreSQL."
-        docker compose -f "$compose_file" up -d --remove-orphans >/dev/null 2>&1 || true
+        "${compose[@]}" -f "$compose_file" up -d --remove-orphans >/dev/null 2>&1 || true
         return 1
     fi
 
     if ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" exec -T \
+        "${compose[@]}" -f "$compose_file" exec -T \
             -e BACKUP_DB_NAME_ENV="$DB_NAME_ENV" \
             -e BACKUP_DB_USER_ENV="$DB_USER_ENV" \
             -e BACKUP_DB_PASSWORD_ENV="$DB_PASSWORD_ENV" \
@@ -200,17 +210,23 @@ restore_db() {
                 DB_USER="$(printenv "$BACKUP_DB_USER_ENV")"
                 DB_PASSWORD="$(printenv "$BACKUP_DB_PASSWORD_ENV")"
                 [ -n "$DB_NAME" ] && [ -n "$DB_USER" ] || exit 20
+                case "$BACKUP_DB_PASSWORD_ENV" in
+                    *_FILE)
+                        [ -r "$DB_PASSWORD" ] || exit 21
+                        DB_PASSWORD="$(cat "$DB_PASSWORD")"
+                        ;;
+                esac
                 export PGPASSWORD="$DB_PASSWORD"
 
-                psql -v ON_ERROR_STOP=1 -v db_name="$DB_NAME" -U "$DB_USER" -d postgres \
-                    -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :'db_name' AND pid <> pg_backend_pid(); DROP DATABASE IF EXISTS :\"db_name\"; CREATE DATABASE :\"db_name\";"
+                dropdb --if-exists --force -U "$DB_USER" "$DB_NAME" || exit 22
+                createdb -U "$DB_USER" -O "$DB_USER" "$DB_NAME" || exit 23
 
-                pg_restore --no-owner --no-privileges \
+                pg_restore --exit-on-error --single-transaction --no-owner --no-privileges \
                     -U "$DB_USER" -d "$DB_NAME"
             ' <"$dump"
     ); then
         log_error "Échec de la suppression, recréation ou restauration de la base."
-        docker compose -f "$compose_file" up -d --remove-orphans >/dev/null 2>&1 || true
+        "${compose[@]}" -f "$compose_file" up -d --remove-orphans >/dev/null 2>&1 || true
         return 1
     fi
 
@@ -219,7 +235,7 @@ restore_db() {
     # Le compose redémarre les services et rétablit les connexions applicatives.
     if ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" up -d --remove-orphans >/dev/null
+        "${compose[@]}" -f "$compose_file" up -d --remove-orphans >/dev/null
     ); then
         log_error "La base est restaurée, mais le redémarrage des services a échoué."
         return 1
@@ -227,7 +243,7 @@ restore_db() {
 
     if ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" exec -T \
+        "${compose[@]}" -f "$compose_file" exec -T \
             -e BACKUP_DB_NAME_ENV="$DB_NAME_ENV" \
             -e BACKUP_DB_USER_ENV="$DB_USER_ENV" \
             "$DB_SERVICE" sh -lc '
@@ -242,7 +258,7 @@ restore_db() {
 
     if ! (
         cd "$APP_DIR"
-        docker compose -f "$compose_file" ps
+        "${compose[@]}" -f "$compose_file" ps
     ); then
         log_error "Le healthcheck Compose a échoué après la restauration."
         return 1

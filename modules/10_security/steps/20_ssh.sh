@@ -20,14 +20,20 @@ SSHD_BACKUP="/etc/ssh/sshd_config.bak"
 update_sshd_config() {
     local key="$1"
     local value="$2"
-
-    if grep -qE "^[#]?[[:space:]]*${key}[[:space:]]+" "$SSHD_CONFIG"; then
-        sed -i -E \
-            "s|^[#]?[[:space:]]*${key}[[:space:]].*|${key} ${value}|" \
-            "$SSHD_CONFIG"
-    else
-        printf '%s %s\n' "$key" "$value" >>"$SSHD_CONFIG"
-    fi
+    local tmp_config
+    tmp_config="$(mktemp)"
+    # OpenSSH uses the first value read: managed global settings must precede
+    # Include directives, notably cloud-init's PasswordAuthentication setting.
+    {
+        printf '%s %s\n' "$key" "$value"
+        awk -v key="$key" '
+            $1 == "Match" { in_match = 1 }
+            !in_match && $1 == key { next }
+            { print }
+        ' "$SSHD_CONFIG"
+    } >"$tmp_config"
+    cat "$tmp_config" >"$SSHD_CONFIG"
+    rm -f "$tmp_config"
 }
 
 rollback_ssh() {
@@ -89,6 +95,10 @@ run_quiet "Impossible d'autoriser le port SSH $SSH_PORT dans UFW." \
 update_sshd_config "Port" "$SSH_PORT"
 update_sshd_config "PermitRootLogin" "no"
 update_sshd_config "PasswordAuthentication" "no"
+update_sshd_config "KbdInteractiveAuthentication" "no"
+update_sshd_config "PubkeyAuthentication" "yes"
+update_sshd_config "AuthenticationMethods" "publickey"
+update_sshd_config "PermitEmptyPasswords" "no"
 update_sshd_config "AllowUsers" "$ADMIN_USER"
 
 if ! sshd -t >/dev/null 2>&1; then

@@ -53,6 +53,7 @@ if $PROVIDER_BACKUP_ENABLED; then
     }
 
     if [ "$PROVIDER_NAME" = "ovh" ]; then
+        run_quiet "Impossible d'installer le support OVH." apt-get install -y python3-venv || exit 1
         OVH_VENV="$PROVIDER_STATE_DIR/ovh-venv"
         OVH_CONFIG="$PROVIDER_CONFIG_DIR/ovh.conf"
 

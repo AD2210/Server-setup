@@ -38,6 +38,10 @@ if [ ! -d "$APPS_DIR" ]; then
 fi
 
 install -d -m 755 -o root -g root "$CADDY_SNIPPETS_DIR" "$CADDY_APPS_DIR"
+install -d -m 750 -o caddy -g caddy /var/log/caddy
+if [[ ! -e /var/log/caddy/access.log ]]; then
+    install -m 640 -o caddy -g caddy /dev/null /var/log/caddy/access.log
+fi
 
 if [ -e "$CADDYFILE" ] && { [ ! -r "$CADDYFILE" ] || [ ! -w "$CADDYFILE" ]; }; then
     log_error "Le Caddyfile n'est pas accessible en lecture/écriture."

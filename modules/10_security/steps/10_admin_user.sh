@@ -16,11 +16,17 @@ INITIAL_USER="${SUDO_USER:-root}"
 
 create_admin_user() {
     local user="$1"
+    local -a useradd_args=(--create-home --shell /bin/bash --groups sudo)
 
     if id "$user" >/dev/null 2>&1; then
         log_info "L'utilisateur '$user' existe déjà."
     else
-        if ! useradd --create-home --shell /bin/bash --groups sudo "$user"; then
+        if getent group "$user" >/dev/null 2>&1; then
+            useradd_args+=(--gid "$user")
+        else
+            useradd_args+=(--user-group)
+        fi
+        if ! useradd "${useradd_args[@]}" "$user"; then
             log_error "Impossible de créer l'utilisateur '$user'."
             return 1
         fi
