@@ -3,7 +3,8 @@ set -euo pipefail
 umask 077
 exec 9>/run/lock/server-setup-backup-databases.lock
 flock -w 600 9 || {
-    echo 'Another database backup is still running.' >&2; exit 1
+    echo 'Another database backup is still running.' >&2
+    exit 1
 }
 source /etc/server-setup/backup/backup.conf
 

@@ -158,7 +158,8 @@ restore_db() {
         compose_file="$APP_DIR/compose.runtime.yaml"
     fi
     [ -f "$compose_file" ] || {
-        log_error "Manifeste Compose introuvable."; return 1
+        log_error "Manifeste Compose introuvable."
+        return 1
     }
     [ -z "$COMPOSE_PROJECT_NAME" ] || compose+=(--project-name "$COMPOSE_PROJECT_NAME")
     [ ! -f "$APP_DIR/.env.prod.local" ] || compose+=(--env-file "$APP_DIR/.env.prod.local")

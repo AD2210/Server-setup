@@ -6,7 +6,8 @@ run_quiet "Impossible d'installer les dépendances." apt-get install -y rclone z
 
 for cmd in rclone zstd docker sha256sum; do
     command_exists "$cmd" || {
-        log_error "Commande requise absente : $cmd"; exit 1
+        log_error "Commande requise absente : $cmd"
+        exit 1
     }
 done
 

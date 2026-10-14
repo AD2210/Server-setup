@@ -27,7 +27,8 @@ HYPERPLANNING_ACTIVE_SCHOOL_YEAR=2026-2027
 ENV
 
 fail() {
-    printf 'FAIL: %s\n' "$*" >&2; exit 1
+    printf 'FAIL: %s\n' "$*" >&2
+    exit 1
 }
 expect_line() { grep -Fxq -- "$2" "$1" || fail "Missing expected line in $1"; }
 expect_absent() { ! grep -Fq -- "$2" "$1" || fail "Unexpected API key in $1"; }
