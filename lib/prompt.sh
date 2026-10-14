@@ -87,18 +87,18 @@ confirm() {
         if parse_boolean "$configured"; then
             log_info "$prompt : oui (configuration)"
             return 0
+        else
+            case $? in
+                1)
+                    log_info "$prompt : non (configuration)"
+                    return 1
+                    ;;
+                *)
+                    log_error "Valeur booléenne invalide pour $config_key : $configured"
+                    return 2
+                    ;;
+            esac
         fi
-
-        case $? in
-            1)
-                log_info "$prompt : non (configuration)"
-                return 1
-                ;;
-            *)
-                log_error "Valeur booléenne invalide pour $config_key : $configured"
-                return 2
-                ;;
-        esac
     fi
 
     if $NON_INTERACTIVE; then

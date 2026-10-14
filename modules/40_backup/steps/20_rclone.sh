@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 log_step "Configuration du stockage distant"
 
+# Compatibility with configuration prepared before the unattended key rename.
+if config_has KEEP_RCLONE_CONFIG && ! config_has RCLONE_KEEP_EXISTING; then
+    # Read indirectly by confirm_required through its configuration key.
+    # shellcheck disable=SC2034
+    RCLONE_KEEP_EXISTING="$(config_get KEEP_RCLONE_CONFIG)"
+fi
+
 RCLONE_DIR="/etc/rclone"
 RCLONE_CONFIG="$RCLONE_DIR/rclone.conf"
 

@@ -56,3 +56,8 @@ jobs:
 
       - name: Run static QA
         run: qa/lint.sh
+
+      - name: Verify provisioning and API isolation
+        run: |
+          bash tests/test-provision-config.sh
+          bash tests/test-server-api-config.sh

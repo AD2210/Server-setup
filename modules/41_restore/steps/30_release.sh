@@ -44,10 +44,11 @@ restore_release() {
         return 1
     }
 
-    compose_file="$(ask_input "Fichier Compose" "compose.yaml" "RESTORE_COMPOSE_FILE")"
+    local default_compose=compose.yaml
+    [ -f "/srv/apps/$app/compose.runtime.yaml" ] && default_compose=compose.runtime.yaml
+    compose_file="$(ask_input "Fichier Compose" "$default_compose" "RESTORE_COMPOSE_FILE")"
     [ -f "/srv/apps/$app/$compose_file" ] || {
-        log_error "Compose introuvable."
-        return 1
+        log_error "Compose introuvable."; return 1
     }
 
     source_env="$staging/srv/apps/$app/.env.prod.local"

@@ -26,7 +26,7 @@ CADDY_APPS_SOURCE="$PROJECT_DIR/config/apps"
 if [ ! -e "$CADDYFILE" ]; then
     install -m 644 -o root -g root "$CADDY_TEMPLATE" "$CADDYFILE"
     log_info "Caddyfile serveur installé : $CADDYFILE"
-elif ! grep -Fq 'import apps/*.caddy' "$CADDYFILE"; then
+elif ! grep -Fq 'import apps/*.caddy' "$CADDYFILE" && ! grep -Fq 'import /etc/caddy/apps/*.caddy' "$CADDYFILE"; then
     CADDY_MIGRATION_BACKUP="$CADDYFILE.migration.$(date +%Y%m%d-%H%M%S)"
 
     log_warn "Le Caddyfile actuel ne sépare pas encore la configuration serveur des applications."

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 log_step "Détection de l'utilisateur administrateur"
 
-ADMIN_USER="${SUDO_USER:-$(logname 2>/dev/null || true)}"
+ADMIN_USER="${DOCKER_ADMIN_USER:-${ADMIN_USER:-${SUDO_USER:-$(logname 2>/dev/null || true)}}}"
 
 if [ -z "$ADMIN_USER" ] || [ "$ADMIN_USER" = "root" ]; then
     log_warn "Impossible de détecter automatiquement l'utilisateur administrateur."
