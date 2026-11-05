@@ -31,7 +31,7 @@ prune_local_backups() {
 }
 
 prune_remote_backups() {
-    local kind="$1" current="$2" keep="${REMOTE_RETENTION_COUNT:-0}" root listing name index=0
+    local kind="$1" current="$2" keep="${REMOTE_RETENTION_COUNT:-0}" root listing contents name index=0
     [[ "$kind" = databases || "$kind" = files ]] || return 1
     [[ "$current" =~ ^[0-9]{8}T[0-9]{6}Z$ && "$keep" =~ ^[0-9]+$ ]] || return 1
     root="${RCLONE_REMOTE}:${REMOTE_ROOT}/$kind"
@@ -46,6 +46,8 @@ prune_remote_backups() {
     grep -qxF -- "$current" <<< "$listing" || return 1
     while IFS= read -r name; do
         [[ -n "$name" ]] || continue
+        contents="$(rclone lsf "$root/$name" --files-only --max-depth 1 --config "$RCLONE_CONFIG")" || return 1
+        grep -qxF COMPLETE <<< "$contents" || continue
         index=$((index + 1))
         if (( index > keep )) && [[ "$name" != "$current" ]]; then
             rclone purge "$root/$name" --config "$RCLONE_CONFIG"
