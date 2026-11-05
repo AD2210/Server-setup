@@ -61,3 +61,31 @@ jobs:
         run: |
           bash tests/test-provision-config.sh
           bash tests/test-server-api-config.sh
+
+  publish-release:
+    name: Publish validated release
+    needs: static-analysis
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Publish release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already published"
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" --verify-tag --title "Server Setup $RELEASE_TAG" \
+            --notes-file "docs/releases/$RELEASE_TAG.md"

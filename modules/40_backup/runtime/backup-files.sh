@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
+exec 9>/run/lock/server-setup-backup-files.lock
+flock -w 600 9
 source /etc/server-setup/backup/backup.conf
+source /usr/local/lib/server-setup/backup-retention.sh
 
 EXCLUDES="/etc/server-setup/backup/excludes.txt"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -33,10 +37,13 @@ tar "${ARGS[@]}" -C / -cf - "${SOURCES[@]}" | zstd -T0 -q -o "$WORK/system.tar.z
 )
 touch "$WORK/COMPLETE"
 
-rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
-rclone lsf "$REMOTE" --config "$RCLONE_CONFIG" --files-only | grep -qx COMPLETE
-
-find "$LOCAL_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name 'files-*' -mtime "+$LOCAL_RETENTION_DAYS" -exec rm -rf {} +
-
-rclone delete "${RCLONE_REMOTE}:${REMOTE_ROOT}/files" --config "$RCLONE_CONFIG" --min-age "${REMOTE_RETENTION_DAYS}d" --quiet
-rclone rmdirs "${RCLONE_REMOTE}:${REMOTE_ROOT}/files" --config "$RCLONE_CONFIG" --leave-root --quiet || true
+if [[ "${REMOTE_BACKUP_ENABLED:-true}" = true ]]; then
+    exec 7>/run/lock/server-setup-backup-remote.lock
+    flock -w 600 7
+    rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
+    rclone check "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --one-way --quiet
+    prune_remote_backups files "$STAMP"
+else
+    echo 'Local files backup complete; remote transfer is disabled by configuration.'
+fi
+prune_local_backups files "$STAMP"

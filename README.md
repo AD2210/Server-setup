@@ -202,6 +202,10 @@ QA_ALLOW_MISSING_TOOLS=true qa/lint.sh
 
 La CI utilise `qa/lint.sh` en mode strict.
 
+Les tags Git Flow `vX.Y.Z` déclenchent cette QA et les tests de provisionnement,
+puis publient la GitHub Release à partir de `docs/releases/vX.Y.Z.md`.
+Le tag doit appartenir à `main`.
+
 ## Structure du dépôt
 
 ```text

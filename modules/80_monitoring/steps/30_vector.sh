@@ -48,6 +48,12 @@ else
     log_info "Configuration Vector existante conservée : $VECTOR_ENV_FILE"
 fi
 
+# The supplied template interpolates a root-owned environment file. Vector
+# 0.57+ requires an explicit opt-in for this existing configuration contract.
+if ! grep -q '^VECTOR_DANGEROUSLY_ALLOW_ENV_VAR_INTERPOLATION=' "$VECTOR_ENV_FILE"; then
+    printf 'VECTOR_DANGEROUSLY_ALLOW_ENV_VAR_INTERPOLATION=true\n' >>"$VECTOR_ENV_FILE"
+fi
+
 if [ ! -e "$VECTOR_CONFIG_FILE" ]; then
     install -m 644 -o root -g root \
         "$PROJECT_DIR/config/vector/vector.toml.example" "$VECTOR_CONFIG_FILE"
@@ -73,14 +79,17 @@ set -a
 source "$VECTOR_ENV_FILE"
 set +a
 
+VECTOR_VALIDATE_ARGS=(validate)
 if grep -q 'CHANGE_ME' "$VECTOR_ENV_FILE"; then
     systemctl disable --now vector >/dev/null 2>&1 || true
     log_warn "Vector est installé mais désactivé : renseignez $VECTOR_ENV_FILE."
     log_info "Les endpoints sont des placeholders TODO jusqu'à la finalisation de l'API centrale."
+    # Validate structure while the central API and credentials are unavailable.
+    VECTOR_VALIDATE_ARGS+=(--no-environment)
 else
     systemctl enable --now vector
 fi
 
-if ! run_quiet "La configuration Vector est invalide." vector validate "$VECTOR_CONFIG_FILE"; then
+if ! run_quiet "La configuration Vector est invalide." vector "${VECTOR_VALIDATE_ARGS[@]}" "$VECTOR_CONFIG_FILE"; then
     exit 1
 fi
