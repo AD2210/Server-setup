@@ -55,6 +55,9 @@ done
 touch "$WORK/COMPLETE"
 
 if [[ "${REMOTE_BACKUP_ENABLED:-true}" = true ]]; then
+    # Drive permits duplicate names: serialize namespace creation across jobs.
+    exec 7>/run/lock/server-setup-backup-remote.lock
+    flock -w 600 7
     rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
     rclone check "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --one-way --quiet
     prune_remote_backups databases "$STAMP"

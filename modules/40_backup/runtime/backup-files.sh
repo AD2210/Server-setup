@@ -38,6 +38,8 @@ tar "${ARGS[@]}" -C / -cf - "${SOURCES[@]}" | zstd -T0 -q -o "$WORK/system.tar.z
 touch "$WORK/COMPLETE"
 
 if [[ "${REMOTE_BACKUP_ENABLED:-true}" = true ]]; then
+    exec 7>/run/lock/server-setup-backup-remote.lock
+    flock -w 600 7
     rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
     rclone check "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --one-way --quiet
     prune_remote_backups files "$STAMP"
