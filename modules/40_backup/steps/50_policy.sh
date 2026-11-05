@@ -14,9 +14,16 @@ REMOTE_RETENTION_DAYS="$(ask_input "Rétention distante en jours" "30" "REMOTE_R
 LOCAL_RETENTION_COUNT="$(config_get LOCAL_RETENTION_COUNT 0)"
 REMOTE_RETENTION_COUNT="$(config_get REMOTE_RETENTION_COUNT 0)"
 REMOTE_BACKUP_ENABLED="$(config_get REMOTE_BACKUP_ENABLED true)"
-case "$REMOTE_BACKUP_ENABLED" in true | false) ;; *) log_error "REMOTE_BACKUP_ENABLED doit être true ou false."; exit 1 ;; esac
+case "$REMOTE_BACKUP_ENABLED" in true | false) ;; *)
+    log_error "REMOTE_BACKUP_ENABLED doit être true ou false."
+    exit 1
+    ;;
+esac
 for value in "$LOCAL_RETENTION_COUNT" "$REMOTE_RETENTION_COUNT"; do
-    [[ "$value" =~ ^[0-9]+$ ]] || { log_error "Nombre de sauvegardes invalide."; exit 1; }
+    [[ "$value" =~ ^[0-9]+$ ]] || {
+        log_error "Nombre de sauvegardes invalide."
+        exit 1
+    }
 done
 
 for value in "$LOCAL_RETENTION_DAYS" "$REMOTE_RETENTION_DAYS"; do

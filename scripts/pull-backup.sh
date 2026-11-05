@@ -2,11 +2,16 @@
 # Administrator workstation pull; the SSH private key stays on this workstation.
 set -euo pipefail
 umask 077
+# The caller supplies a trusted, workstation-local configuration file.
+# shellcheck disable=SC1090
 source "${1:?Configuration file required}"
 : "${BACKUP_HOST:?}" "${BACKUP_USER:?}" "${BACKUP_PORT:?}"
 : "${BACKUP_KEY:?}" "${BACKUP_KNOWN_HOSTS:?}" "${BACKUP_MOUNT:?}" "${BACKUP_DEST:?}"
 [[ "$BACKUP_DEST" = "$BACKUP_MOUNT/"* ]] || exit 2
-mountpoint -q "$BACKUP_MOUNT" || { echo 'Backup disk is not mounted.' >&2; exit 1; }
+mountpoint -q "$BACKUP_MOUNT" || {
+    echo 'Backup disk is not mounted.' >&2
+    exit 1
+}
 mkdir -p "$BACKUP_DEST"
 exec 9>"${XDG_RUNTIME_DIR:-/tmp}/server-backup-pull-${UID}.lock"
 flock -n 9 || exit 0
@@ -23,7 +28,7 @@ cache="${BACKUP_CACHE:-$HOME/.cache/server-backup-pull}"
 install -d -m 700 "$cache"
 work="$(mktemp -d "$cache/pull.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
-ssh "${ssh_args[@]}" "$remote" 'sudo -n server-backup-export --archive' </dev/null > "$work/backup.tar.gz"
+ssh "${ssh_args[@]}" "$remote" 'sudo -n server-backup-export --archive' </dev/null >"$work/backup.tar.gz"
 python3 - "$work" <<'PY'
 import hashlib, pathlib, re, sys, tarfile
 work = pathlib.Path(sys.argv[1])
@@ -66,5 +71,5 @@ cp "$work/backup.tar.gz" "$BACKUP_DEST/latest.tar.gz.partial"
 cmp "$work/backup.tar.gz" "$BACKUP_DEST/latest.tar.gz.partial"
 mv "$BACKUP_DEST/latest.tar.gz.partial" "$BACKUP_DEST/latest.tar.gz"
 cp "$work/manifest" "$BACKUP_DEST/latest.manifest"
-(cd "$BACKUP_DEST" && sha256sum latest.tar.gz > latest.sha256)
+(cd "$BACKUP_DEST" && sha256sum latest.tar.gz >latest.sha256)
 echo "Latest backup copied and verified: $BACKUP_DEST/latest.tar.gz"
