@@ -32,3 +32,11 @@ par la politique de comptage.
 La copie vers les postes d'administration ou du client est un transfert distinct.
 Ne jamais transférer la clé SSH privée d'administration au poste du client ;
 prévoir un accès de lecture dédié lors de son raccordement.
+
+`sudo server-backup-export --archive` exporte les dernières sauvegardes complètes
+DB et fichiers en empêchant leur rotation pendant la lecture. Le script poste
+`scripts/pull-backup.sh` utilise une configuration locale : `BACKUP_HOST`,
+`BACKUP_USER`, `BACKUP_PORT`, `BACKUP_KEY`, `BACKUP_KNOWN_HOSTS`, `BACKUP_MOUNT`
+et `BACKUP_DEST`. Il refuse un disque non monté, vérifie les sommes de contrôle
+et remplace `latest.tar.gz` seulement après validation de la nouvelle copie.
+Le script nécessite Bash, Python 3.12+, SSH et les outils GNU usuels.
