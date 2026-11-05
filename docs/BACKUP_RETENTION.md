@@ -10,7 +10,7 @@ LOCAL_RETENTION_COUNT="1"
 REMOTE_RETENTION_COUNT="1"
 ```
 
-Puis exécuter `sudo setup backup --non-interactive`. Le mode local est annoncé
+Puis exécuter `sudo setup backup --config /etc/server-setup/setup.conf --non-interactive`. Le mode local est annoncé
 explicitement ; aucune sauvegarde distante n'est revendiquée dans ce mode.
 Les cibles PostgreSQL doivent déjà être présentes dans
 `/etc/server-setup/backup/targets.d/`.
@@ -18,7 +18,7 @@ Les cibles PostgreSQL doivent déjà être présentes dans
 Configurer ensuite la remote `gdrive` avec
 `sudo rclone config --config /etc/rclone/rclone.conf`, passer
 `REMOTE_BACKUP_ENABLED="true"` dans `setup.conf`, puis relancer
-`sudo setup backup --non-interactive`. L'accès à la remote est alors vérifié
+`sudo setup backup --config /etc/server-setup/setup.conf --non-interactive`. L'accès à la remote est alors vérifié
 avant l'activation du transfert.
 
 Un nombre positif prévaut sur la rétention en jours, séparément pour les dumps
