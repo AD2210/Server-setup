@@ -11,6 +11,13 @@ install -d -m 700 -o root -g root "/etc/server-setup/backup" "$LOCAL_BACKUP_ROOT
 REMOTE_ROOT="$(ask_input "Dossier distant racine" "servers/$HOST_ID" "REMOTE_ROOT")"
 LOCAL_RETENTION_DAYS="$(ask_input "Rétention locale en jours" "3" "LOCAL_RETENTION_DAYS")"
 REMOTE_RETENTION_DAYS="$(ask_input "Rétention distante en jours" "30" "REMOTE_RETENTION_DAYS")"
+LOCAL_RETENTION_COUNT="$(config_get LOCAL_RETENTION_COUNT 0)"
+REMOTE_RETENTION_COUNT="$(config_get REMOTE_RETENTION_COUNT 0)"
+REMOTE_BACKUP_ENABLED="$(config_get REMOTE_BACKUP_ENABLED true)"
+case "$REMOTE_BACKUP_ENABLED" in true | false) ;; *) log_error "REMOTE_BACKUP_ENABLED doit être true ou false."; exit 1 ;; esac
+for value in "$LOCAL_RETENTION_COUNT" "$REMOTE_RETENTION_COUNT"; do
+    [[ "$value" =~ ^[0-9]+$ ]] || { log_error "Nombre de sauvegardes invalide."; exit 1; }
+done
 
 for value in "$LOCAL_RETENTION_DAYS" "$REMOTE_RETENTION_DAYS"; do
     [[ "$value" =~ ^[0-9]+$ ]] && [ "$value" -ge 1 ] || {
@@ -34,6 +41,9 @@ REMOTE_ROOT="$REMOTE_ROOT"
 LOCAL_BACKUP_ROOT="$LOCAL_BACKUP_ROOT"
 LOCAL_RETENTION_DAYS="$LOCAL_RETENTION_DAYS"
 REMOTE_RETENTION_DAYS="$REMOTE_RETENTION_DAYS"
+LOCAL_RETENTION_COUNT="$LOCAL_RETENTION_COUNT"
+REMOTE_RETENTION_COUNT="$REMOTE_RETENTION_COUNT"
+REMOTE_BACKUP_ENABLED="$REMOTE_BACKUP_ENABLED"
 HOST_ID="$HOST_ID"
 DB_BACKUP_ENABLED="$DB_BACKUP_ENABLED"
 FILES_BACKUP_ENABLED="$FILES_BACKUP_ENABLED"

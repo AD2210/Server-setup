@@ -7,6 +7,7 @@ flock -w 600 9 || {
     exit 1
 }
 source /etc/server-setup/backup/backup.conf
+source /usr/local/lib/server-setup/backup-retention.sh
 
 TARGETS="/etc/server-setup/backup/targets.d"
 if [[ "${DB_BACKUP_ENABLED:-false}" != true ]] || ! compgen -G "$TARGETS/*.conf" >/dev/null; then
@@ -53,10 +54,11 @@ done
 )
 touch "$WORK/COMPLETE"
 
-rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
-rclone lsf "$REMOTE" --config "$RCLONE_CONFIG" --files-only | grep -qx COMPLETE
-
-find "$LOCAL_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -name 'db-*' -mtime "+$LOCAL_RETENTION_DAYS" -exec rm -rf {} +
-
-rclone delete "${RCLONE_REMOTE}:${REMOTE_ROOT}/databases" --config "$RCLONE_CONFIG" --min-age "${REMOTE_RETENTION_DAYS}d" --quiet
-rclone rmdirs "${RCLONE_REMOTE}:${REMOTE_ROOT}/databases" --config "$RCLONE_CONFIG" --leave-root --quiet || true
+if [[ "${REMOTE_BACKUP_ENABLED:-true}" = true ]]; then
+    rclone copy "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --quiet
+    rclone check "$WORK" "$REMOTE" --config "$RCLONE_CONFIG" --one-way --quiet
+    prune_remote_backups databases "$STAMP"
+else
+    echo 'Local PostgreSQL backup complete; remote transfer is disabled by configuration.'
+fi
+prune_local_backups db "$STAMP"

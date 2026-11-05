@@ -15,6 +15,13 @@ install -d -m 700 -o root -g root "$RCLONE_DIR"
 touch "$RCLONE_CONFIG"
 chmod 600 "$RCLONE_CONFIG"
 
+if ! parse_boolean "$(config_get REMOTE_BACKUP_ENABLED true)"; then
+    RCLONE_REMOTE="$(config_get RCLONE_REMOTE backup)"
+    log_warn "Transfert distant désactivé explicitement ; les sauvegardes locales restent actives."
+    log_info "Configurer rclone puis activer REMOTE_BACKUP_ENABLED avant de relancer setup backup."
+    return 0
+fi
+
 REMOTES="$(rclone listremotes --config "$RCLONE_CONFIG" 2>/dev/null || true)"
 
 if [ -n "$REMOTES" ]; then

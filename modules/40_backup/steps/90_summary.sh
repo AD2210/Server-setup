@@ -6,7 +6,11 @@ DB_OK=true
 FILES_OK=true
 PROVIDER_OK=true
 
-rclone lsd "${RCLONE_REMOTE}:" --config "$RCLONE_CONFIG" >/dev/null 2>&1 && RCLONE_OK=true
+if [[ "${REMOTE_BACKUP_ENABLED:-true}" = false ]]; then
+    RCLONE_OK=true
+else
+    rclone lsd "${RCLONE_REMOTE}:" --config "$RCLONE_CONFIG" >/dev/null 2>&1 && RCLONE_OK=true
+fi
 
 if $DB_BACKUP_ENABLED; then
     [ -x /usr/local/lib/server-setup/backup-databases.sh ] && systemctl is-active --quiet server-setup-backup-db.timer || DB_OK=false
@@ -21,7 +25,11 @@ if $PROVIDER_BACKUP_ENABLED; then
 fi
 
 log ""
-$RCLONE_OK && log "  Stockage rclone .......... OK ($RCLONE_REMOTE)" || log_error "Stockage rclone .......... ERREUR"
+if [[ "${REMOTE_BACKUP_ENABLED:-true}" = false ]]; then
+    log_warn "Stockage rclone .......... DÉSACTIVÉ (sauvegardes locales uniquement)"
+else
+    $RCLONE_OK && log "  Stockage rclone .......... OK ($RCLONE_REMOTE)" || log_error "Stockage rclone .......... ERREUR"
+fi
 
 $DB_BACKUP_ENABLED && { $DB_OK && log "  Backup PostgreSQL ........ OK" || log_error "Backup PostgreSQL ........ ERREUR"; } || log "  Backup PostgreSQL ........ DÉSACTIVÉ"
 
